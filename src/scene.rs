@@ -41,6 +41,14 @@ impl Scene {
 
         self
     }
+    pub fn has(&self, entity: Entity) -> bool {
+        let ref mut entities = self.data.borrow_mut().entities;
+
+        match entities.iter().position(|e| *e == entity) {
+            Some(_) => true,
+            None => false,
+        }
+    }
     pub fn remove(&self, entity: Entity) -> &Self {
         let ref mut entities = self.data.borrow_mut().entities;
 

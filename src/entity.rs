@@ -44,16 +44,16 @@ impl Entity {
     }
 
     pub fn depth(&self) -> usize {
-        self.data.borrow_mut().depth
+        self.data.borrow().depth
     }
     pub fn scene(&self) -> Option<Scene> {
-        match self.data.borrow_mut().scene {
+        match self.data.borrow().scene {
             Some(ref scene) => Some(scene.clone()),
             None => None,
         }
     }
     pub fn parent(&self) -> Option<Entity> {
-        match self.data.borrow_mut().parent {
+        match self.data.borrow().parent {
             Some(ref parent) => Some(parent.clone()),
             None => None,
         }

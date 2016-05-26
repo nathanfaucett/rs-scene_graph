@@ -9,7 +9,8 @@ extern crate scene_graph;
 use scene_graph::{Scene, Entity};
 
 
-fn main() {
+#[test]
+fn test_scene() {
     let scene = Scene::new();
     let grandparent = Entity::new();
     let parent = Entity::new();
@@ -20,6 +21,4 @@ fn main() {
 
     scene
         .add(grandparent);
-
-    println!("{:?}", scene);
 }
