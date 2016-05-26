@@ -1,0 +1,13 @@
+[package]
+name = "scene_graph"
+version = "0.1.0"
+authors = ["nathanfaucett <nathanfaucett@gmail.com>"]
+
+keywords = ["scene_graph"]
+description = "entity component scene graph for rust"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/nathanfaucett/rs-scene_graph.git"
+homepage = "https://github.com/nathanfaucett/rs-scene_graph"
+
+[dependencies]
