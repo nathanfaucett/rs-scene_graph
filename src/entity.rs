@@ -1,7 +1,6 @@
 use collections::vec::Vec;
-use alloc::rc::Rc;
+use alloc::arc::Arc;
 use core::cell::RefCell;
-use core::fmt;
 
 use scene::Scene;
 
@@ -13,28 +12,16 @@ struct EntityData {
     children: Vec<Entity>,
 }
 
-impl fmt::Debug for EntityData {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-            "EntityData: {{ depth: {:?} scene: {:?} parent: {:?} children: {:?} }}",
-            self.depth,
-            match self.scene { Some(_) => "Scene", None => "None" },
-            match self.parent { Some(_) => "Parent", None => "None" },
-            self.children.len(),
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Entity {
-    data: Rc<RefCell<EntityData>>,
+    data: Arc<RefCell<EntityData>>,
 }
 
 impl Entity {
 
     pub fn new() -> Self {
         Entity {
-            data: Rc::new(RefCell::new(EntityData {
+            data: Arc::new(RefCell::new(EntityData {
                 depth: 0,
                 scene: None,
                 parent: None,
@@ -46,54 +33,75 @@ impl Entity {
     pub fn depth(&self) -> usize {
         self.data.borrow().depth
     }
+    
     pub fn scene(&self) -> Option<Scene> {
         match self.data.borrow().scene {
             Some(ref scene) => Some(scene.clone()),
             None => None,
         }
     }
+    pub fn has_scene(&self) -> bool {
+        match self.data.borrow().scene {
+            Some(_) => true,
+            None => false,
+        }
+    }
+    
     pub fn parent(&self) -> Option<Entity> {
         match self.data.borrow().parent {
             Some(ref parent) => Some(parent.clone()),
             None => None,
         }
     }
-
-    pub fn add(&self, entity: Entity) -> &Self {
-        assert!(*self != entity, "entity can not be a child of itself");
-
-        let parent = entity.parent();
-        if parent != None {
-            parent.unwrap().remove(entity.clone());
+    pub fn has_parent(&self) -> bool {
+        match self.data.borrow().parent {
+            Some(_) => true,
+            None => false,
         }
+    }
 
-        self.data.borrow_mut().children.push(entity.clone());
-
-        {
-            let mut entity_data = entity.data.borrow_mut();
-            entity_data.depth = self.depth() + 1;
-            entity_data.parent = Some(self.clone());
+    pub fn add_child(&self, child: Entity) -> &Self {
+        if *self != child {
+            let parent = child.parent();
+            if parent != None {
+                parent.unwrap().remove_child(child.clone());
+            }
+    
+            self.data.borrow_mut().children.push(child.clone());
+    
+            {
+                let mut child_data = child.data.borrow_mut();
+                child_data.depth = self.depth() + 1;
+                child_data.parent = Some(self.clone());
+            }
+            child.update_children_depth();
+    
+            let scene = self.scene();
+            if scene != None {
+                scene.unwrap().add_entity(child.clone());
+            }
         }
-        entity.update_children_depth();
-
-        let scene = self.scene();
-        if scene != None {
-            scene.unwrap().add(entity.clone());
-        }
-
         self
     }
-    pub fn remove(&self, entity: Entity) -> &Self {
+    pub fn has_child(&self, child: Entity) -> bool {
+        let ref children = self.data.borrow().children;
+
+        match children.iter().position(|c| *c == child) {
+            Some(_) => true,
+            None => false,
+        }
+    }
+    pub fn remove_child(&self, child: Entity) -> &Self {
         let ref mut children = self.data.borrow_mut().children;
 
-        match children.iter().position(|e| *e == entity) {
+        match children.iter().position(|c| *c == child) {
             Some(i) => {
                 {
-                    let mut entity_data = self.data.borrow_mut();
-                    entity_data.depth = 0;
-                    entity_data.parent = None;
+                    let mut child_data = self.data.borrow_mut();
+                    child_data.depth = 0;
+                    child_data.parent = None;
                 }
-                entity.update_children_depth();
+                child.update_children_depth();
                 children.remove(i);
                 self
             },
@@ -111,19 +119,24 @@ impl Entity {
     }
 
     pub fn __set_scene(&self, scene: Scene){
-        let mut entity = self.data.borrow_mut();
+        let mut entity_data = self.data.borrow_mut();
 
-        for child in entity.children.iter() {
-            scene.add(child.clone());
+        for child in entity_data.children.iter() {
+            scene.add_entity(child.clone());
         }
 
-        entity.scene = Some(scene);
+        entity_data.scene = Some(scene);
     }
-    pub fn __remove_scene(&self){
+    pub fn __remove_scene(&self, scene: Scene){
         {
             let mut entity_data = self.data.borrow_mut();
-            entity_data.scene = None;
+            
+            for child in entity_data.children.iter() {
+                scene.remove_entity(child.clone());
+            }
+            
             entity_data.depth = 0;
+            entity_data.scene = None;
             entity_data.parent = None;
         }
         self.update_children_depth();
@@ -132,7 +145,7 @@ impl Entity {
 
 impl PartialEq<Entity> for Entity {
     fn eq(&self, other: &Entity) -> bool {
-        (&*self.data.borrow_mut() as *const _) == (&*other.data.borrow_mut() as *const _)
+        (&*self.data.borrow() as *const _) == (&*other.data.borrow() as *const _)
     }
     fn ne(&self, other: &Entity) -> bool {
         !self.eq(other)

@@ -16,9 +16,12 @@ fn test_scene() {
     let parent = Entity::new();
     let child = Entity::new();
 
-    parent.add(child);
-    grandparent.add(parent);
+    parent.add_child(child.clone());
+    grandparent.add_child(parent.clone());
 
-    scene
-        .add(grandparent);
+    scene.add_entity(grandparent.clone());
+
+    assert!(scene.has_entity(grandparent) == true);
+    assert!(scene.has_entity(parent) == true);
+    assert!(scene.has_entity(child) == true);
 }

@@ -1,36 +1,36 @@
 use collections::vec::Vec;
-use alloc::rc::Rc;
+use alloc::arc::Arc;
 use core::cell::RefCell;
 
 use entity::Entity;
 
 
-#[derive(Debug)]
 struct SceneData {
     entities: Vec<Entity>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Scene {
-    data: Rc<RefCell<SceneData>>,
+    data: Arc<RefCell<SceneData>>,
 }
 
 impl Scene {
     pub fn new() -> Self {
         Scene {
-            data: Rc::new(RefCell::new(SceneData {
+            data: Arc::new(RefCell::new(SceneData {
                 entities: Vec::new(),
             }))
         }
     }
 
-    pub fn add(&self, entity: Entity) -> &Self {
+    pub fn add_entity(&self, entity: Entity) -> &Self {
         let scene = entity.scene();
+        
         if scene != None {
             let scene = scene.unwrap();
 
             if scene != *self {
-                scene.remove(entity.clone());
+                scene.remove_entity(entity.clone());
             } else {
                 return self;
             }
@@ -41,21 +41,21 @@ impl Scene {
 
         self
     }
-    pub fn has(&self, entity: Entity) -> bool {
-        let ref mut entities = self.data.borrow_mut().entities;
+    pub fn has_entity(&self, entity: Entity) -> bool {
+        let ref entities = self.data.borrow().entities;
 
         match entities.iter().position(|e| *e == entity) {
             Some(_) => true,
             None => false,
         }
     }
-    pub fn remove(&self, entity: Entity) -> &Self {
+    pub fn remove_entity(&self, entity: Entity) -> &Self {
         let ref mut entities = self.data.borrow_mut().entities;
 
         match entities.iter().position(|e| *e == entity) {
             Some(i) => {
                 entities.remove(i);
-                entity.__remove_scene();
+                entity.__remove_scene(self.clone());
                 self
             },
             None => self,
@@ -65,7 +65,7 @@ impl Scene {
 
 impl PartialEq<Scene> for Scene {
     fn eq(&self, other: &Scene) -> bool {
-        (&*self.data.borrow_mut() as *const _) == (&*other.data.borrow_mut() as *const _)
+        (&*self.data.borrow() as *const _) == (&*other.data.borrow() as *const _)
     }
     fn ne(&self, other: &Scene) -> bool {
         !self.eq(other)
