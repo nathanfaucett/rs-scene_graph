@@ -4,15 +4,12 @@ use component_manager::ComponentManager;
 
 pub trait Component {
 
-    fn get_component_manager<T: ComponentManager>(&self) -> T;
-    fn set_component_manager<T: ComponentManager>(&self, component_manager: T) -> Self;
-
     fn get_entity(&self) -> Entity;
-    fn set_entity(&self, entity: Entity) -> Self;
+    fn set_entity(&self, entity: Entity);
 
-    fn destroy(&self) -> Self;
-    fn clear(&self) -> Self;
-    fn init(&self) -> Self;
-    fn awake(&self) -> Self;
-    fn update(&self) -> Self;
+    fn destroy(&self);
+    fn clear(&self);
+    fn init(&self);
+    fn awake(&self);
+    fn update(&self);
 }

@@ -24,7 +24,7 @@ impl Scene {
     }
 
     pub fn add_entity(&self, entity: Entity) -> &Self {
-        let scene = entity.scene();
+        let scene = entity.get_scene();
         
         if scene != None {
             let scene = scene.unwrap();
