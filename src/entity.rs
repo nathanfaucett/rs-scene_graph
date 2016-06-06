@@ -115,6 +115,10 @@ impl Entity {
         }
     }
 
+    pub fn add_components(&self, components: ) -> &Self {
+        
+    }
+
     fn update_children_depth(&self) {
         let entity = self.data.borrow_mut();
 
