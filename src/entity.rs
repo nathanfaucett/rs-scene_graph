@@ -116,7 +116,7 @@ impl Entity {
         }
     }
 
-    pub fn add_component<T: Any>(&self, component: T) -> &Self {
+    pub fn add_component<T: Component>(&self, component: T) -> &Self {
         let ref mut components = self.data.borrow_mut().components;
         let id = Id::of::<T>();
 
@@ -125,10 +125,10 @@ impl Entity {
         }
         self
     }
-    pub fn has_component<T: Any>(&self) -> bool {
+    pub fn has_component<T: Component>(&self) -> bool {
         self.data.borrow().components.contains_key(&Id::of::<T>())
     }
-    pub fn remove_component<T: Any>(&self) -> &Self {
+    pub fn remove_component<T: Component>(&self) -> &Self {
         let ref mut components = self.data.borrow_mut().components;
         let id = Id::of::<T>();
 
@@ -137,7 +137,7 @@ impl Entity {
         }
         self
     }
-    pub fn get_component<T: Component + Clone>(&self) -> Option<T> {
+    pub fn get_component<T: Component>(&self) -> Option<T> {
         let ref components = self.data.borrow().components;
         let id = Id::of::<T>();
 

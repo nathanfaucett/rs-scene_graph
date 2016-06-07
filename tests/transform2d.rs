@@ -11,7 +11,39 @@ extern crate scene_graph;
 use alloc::arc::Arc;
 use core::cell::RefCell;
 
-use scene_graph::{Entity, Component};
+use scene_graph::{Entity, Component, ComponentManager, Id};
+
+
+struct Transform2DManagerData {
+    components: Vec<Transform2D>,
+}
+
+#[derive(Clone)]
+pub struct Transform2DManager {
+    data: Arc<RefCell<Transform2DManagerData>>,
+}
+
+impl ComponentManager for Transform2DManager {
+
+    fn new() -> Transform2DManager {
+        Transform2DManager {
+            data: Arc::new(RefCell::new(Transform2DManagerData {
+                components: Vec::new(),
+            }))
+        }
+    }
+
+    fn order(&self) -> usize { 9999 }
+    fn is_empty(&self) -> bool {
+        self.data.borrow().components.len() == 0
+    }
+    fn sort(&self) -> &Self { self }
+
+    fn clear(&self) -> &Self { self }
+    fn init(&self) -> &Self { self }
+    fn awake(&self) -> &Self { self }
+    fn update(&self) -> &Self { self }
+}
 
 
 struct Transform2DData {
@@ -98,18 +130,22 @@ impl Transform2D {
         self.data.borrow().local_matrix
     }
 }
-
 impl Component for Transform2D {
+    fn component_manager() -> Id {
+        Id::of::<Transform2DManager>()
+    }
+
     fn entity(&self) -> Option<Entity> {
         self.data.borrow().entity.clone()
     }
-    fn set_entity(&mut self, entity: Option<Entity>) {
+    fn set_entity(&self, entity: Option<Entity>) -> &Self {
         self.data.borrow_mut().entity = entity;
+        self
     }
 
-    fn destroy(&self) {}
-    fn clear(&self) {}
-    fn init(&self) {}
-    fn awake(&self) {}
-    fn update(&self) {}
+    fn destroy(&self) -> &Self { self }
+    fn clear(&self) -> &Self { self }
+    fn init(&self) -> &Self { self }
+    fn awake(&self) -> &Self { self }
+    fn update(&self) -> &Self { self }
 }

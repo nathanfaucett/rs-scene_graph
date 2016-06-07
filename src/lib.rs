@@ -16,3 +16,4 @@ pub use scene::Scene;
 pub use entity::Entity;
 pub use component::Component;
 pub use component_manager::ComponentManager;
+pub use id::Id;

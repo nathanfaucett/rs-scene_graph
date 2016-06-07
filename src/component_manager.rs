@@ -1,12 +1,16 @@
+use core::any::Any;
 
 
-pub trait ComponentManager {
+pub trait ComponentManager: Any + Clone {
+
+    fn new() -> Self;
+
     fn order(&self) -> usize;
     fn is_empty(&self) -> bool;
-    fn sort(&self);
+    fn sort(&self) -> &Self;
 
-    fn clear(&self);
-    fn init(&self);
-    fn awake(&self);
-    fn update(&self);
+    fn clear(&self) -> &Self;
+    fn init(&self) -> &Self;
+    fn awake(&self) -> &Self;
+    fn update(&self) -> &Self;
 }
