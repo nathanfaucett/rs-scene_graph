@@ -3,8 +3,9 @@ use collections::btree_map::BTreeMap;
 use collections::boxed::Box;
 use alloc::arc::Arc;
 use core::cell::RefCell;
-use core::any::{Any, TypeId};
+use core::any::Any;
 
+use id::Id;
 use scene::Scene;
 use component::Component;
 
@@ -14,7 +15,7 @@ struct EntityData {
     scene: Option<Scene>,
     parent: Option<Entity>,
     children: Vec<Entity>,
-    components: BTreeMap<TypeId, Box<Any>>,
+    components: BTreeMap<Id, Box<Any>>,
 }
 
 #[derive(Clone)]
@@ -36,11 +37,11 @@ impl Entity {
         }
     }
 
-    pub fn get_depth(&self) -> usize {
+    pub fn depth(&self) -> usize {
         self.data.borrow().depth
     }
 
-    pub fn get_scene(&self) -> Option<Scene> {
+    pub fn scene(&self) -> Option<Scene> {
         match self.data.borrow().scene {
             Some(ref scene) => Some(scene.clone()),
             None => None,
@@ -53,7 +54,7 @@ impl Entity {
         }
     }
 
-    pub fn get_parent(&self) -> Option<Entity> {
+    pub fn parent(&self) -> Option<Entity> {
         match self.data.borrow().parent {
             Some(ref parent) => Some(parent.clone()),
             None => None,
@@ -68,7 +69,7 @@ impl Entity {
 
     pub fn add_child(&self, child: Entity) -> &Self {
         if *self != child {
-            let parent = child.get_parent();
+            let parent = child.parent();
             if parent != None {
                 parent.unwrap().remove_child(child.clone());
             }
@@ -77,12 +78,12 @@ impl Entity {
 
             {
                 let mut child_data = child.data.borrow_mut();
-                child_data.depth = self.get_depth() + 1;
+                child_data.depth = self.depth() + 1;
                 child_data.parent = Some(self.clone());
             }
             child.update_children_depth();
 
-            let scene = self.get_scene();
+            let scene = self.scene();
             if scene != None {
                 scene.unwrap().add_entity(child.clone());
             }
@@ -115,8 +116,37 @@ impl Entity {
         }
     }
 
-    pub fn add_components(&self, components: ) -> &Self {
-        
+    pub fn add_component<T: Any>(&self, component: T) -> &Self {
+        let ref mut components = self.data.borrow_mut().components;
+        let id = Id::of::<T>();
+
+        if !components.contains_key(&id) {
+            components.insert(id, Box::new(component));
+        }
+        self
+    }
+    pub fn has_component<T: Any>(&self) -> bool {
+        self.data.borrow().components.contains_key(&Id::of::<T>())
+    }
+    pub fn remove_component<T: Any>(&self) -> &Self {
+        let ref mut components = self.data.borrow_mut().components;
+        let id = Id::of::<T>();
+
+        if components.contains_key(&id) {
+            components.remove(&id);
+        }
+        self
+    }
+    pub fn get_component<T: Component + Clone>(&self) -> Option<T> {
+        let ref components = self.data.borrow().components;
+        let id = Id::of::<T>();
+
+        if components.contains_key(&id) {
+            let component = components.get(&id).unwrap().downcast_ref::<T>().unwrap();
+            Some(component.clone())
+        } else {
+            None
+        }
     }
 
     fn update_children_depth(&self) {

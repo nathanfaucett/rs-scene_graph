@@ -15,6 +15,7 @@ pub struct Scene {
 }
 
 impl Scene {
+
     pub fn new() -> Self {
         Scene {
             data: Arc::new(RefCell::new(SceneData {
@@ -24,8 +25,8 @@ impl Scene {
     }
 
     pub fn add_entity(&self, entity: Entity) -> &Self {
-        let scene = entity.get_scene();
-        
+        let scene = entity.scene();
+
         if scene != None {
             let scene = scene.unwrap();
 

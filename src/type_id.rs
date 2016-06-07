@@ -1,6 +1,0 @@
-
-
-
-struct TypeId {
-    t: usize
-}

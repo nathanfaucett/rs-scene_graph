@@ -1,4 +1,4 @@
-#![feature(collections, alloc)]
+#![feature(collections, alloc, core_intrinsics, reflect_marker)]
 #![no_std]
 
 
@@ -10,6 +10,7 @@ mod scene;
 mod entity;
 mod component;
 mod component_manager;
+mod id;
 
 pub use scene::Scene;
 pub use entity::Entity;

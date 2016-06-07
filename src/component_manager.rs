@@ -1,8 +1,7 @@
-use component::Component;
 
 
 pub trait ComponentManager {
-    fn get_order(&self) -> usize;
+    fn order(&self) -> usize;
     fn is_empty(&self) -> bool;
     fn sort(&self);
 

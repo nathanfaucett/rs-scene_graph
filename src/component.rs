@@ -1,11 +1,12 @@
+use core::any::Any;
+
 use entity::Entity;
-use component_manager::ComponentManager;
 
 
-pub trait Component {
+pub trait Component: Any {
 
-    fn get_entity(&self) -> Entity;
-    fn set_entity(&self, entity: Entity);
+    fn entity(&self) -> Option<Entity>;
+    fn set_entity(&mut self, entity: Option<Entity>);
 
     fn destroy(&self);
     fn clear(&self);
