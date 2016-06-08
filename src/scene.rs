@@ -3,16 +3,16 @@ use collections::btree_map::BTreeMap;
 use collections::boxed::Box;
 use alloc::arc::Arc;
 use core::cell::RefCell;
-use core::any::Any;
 
 use id::Id;
 use entity::Entity;
+use component::Component;
 use component_manager::ComponentManager;
 
 
 struct SceneData {
     entities: Vec<Entity>,
-    component_managers: BTreeMap<Id, Box<Any>>,
+    component_managers: BTreeMap<Id, Box<ComponentManager>>,
 }
 
 #[derive(Clone)]
@@ -70,36 +70,30 @@ impl Scene {
         }
     }
 
-    fn add_component_manager<T: ComponentManager>(&self, component_manager: T) -> &Self {
+    pub fn __add_component(&self, component: &Box<Component>) {
         let ref mut component_managers = self.data.borrow_mut().component_managers;
-        let id = Id::of::<T>();
+        let id = component.component_manager_id();
 
         if !component_managers.contains_key(&id) {
-            component_managers.insert(id, Box::new(component_manager));
+            component_managers.insert(id, component.component_manager());
         }
-        self
+
+        let component_manager = component_managers.get(&id).unwrap();
+        component_manager.add_component(component);
     }
-    fn has_component_manager<T: ComponentManager>(&self) -> bool {
-        self.data.borrow().component_managers.contains_key(&Id::of::<T>())
-    }
-    fn remove_component_manager<T: ComponentManager>(&self) -> &Self {
+    pub fn __remove_component(&self, component: &Box<Component>) {
         let ref mut component_managers = self.data.borrow_mut().component_managers;
-        let id = Id::of::<T>();
+        let id = component.component_manager_id();
+        let is_empty;
 
-        if component_managers.contains_key(&id) {
-            component_managers.remove(&id);
+        {
+            let component_manager = component_managers.get(&id).unwrap();
+            is_empty = component_manager.is_empty();
+            component_manager.remove_component(component);
         }
-        self
-    }
-    pub fn get_component_manager<T: ComponentManager>(&self) -> Option<T> {
-        let ref component_managers = self.data.borrow().component_managers;
-        let id = Id::of::<T>();
 
-        if component_managers.contains_key(&id) {
-            let component_manager = component_managers.get(&id).unwrap().downcast_ref::<T>().unwrap();
-            Some(component_manager.clone())
-        } else {
-            None
+        if is_empty {
+            component_managers.remove(&id);
         }
     }
 }

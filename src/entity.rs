@@ -3,7 +3,6 @@ use collections::btree_map::BTreeMap;
 use collections::boxed::Box;
 use alloc::arc::Arc;
 use core::cell::RefCell;
-use core::any::Any;
 
 use id::Id;
 use scene::Scene;
@@ -15,7 +14,7 @@ struct EntityData {
     scene: Option<Scene>,
     parent: Option<Entity>,
     children: Vec<Entity>,
-    components: BTreeMap<Id, Box<Any>>,
+    components: BTreeMap<Id, Box<Component>>,
 }
 
 #[derive(Clone)]
@@ -116,28 +115,33 @@ impl Entity {
         }
     }
 
-    pub fn add_component<T: Component>(&self, component: T) -> &Self {
+    pub fn add_component<T: Component + Clone>(&self, component: T) -> &Self {
         let ref mut components = self.data.borrow_mut().components;
         let id = Id::of::<T>();
 
         if !components.contains_key(&id) {
+            component.set_entity(Some(self.clone()));
             components.insert(id, Box::new(component));
         }
         self
     }
-    pub fn has_component<T: Component>(&self) -> bool {
+    pub fn has_component<T: Component + Clone>(&self) -> bool {
         self.data.borrow().components.contains_key(&Id::of::<T>())
     }
-    pub fn remove_component<T: Component>(&self) -> &Self {
+    pub fn remove_component<T: Component + Clone>(&self) -> &Self {
         let ref mut components = self.data.borrow_mut().components;
         let id = Id::of::<T>();
 
         if components.contains_key(&id) {
+            {
+                let component = components.get(&Id::of::<T>()).unwrap();
+                component.set_entity(None);
+            }
             components.remove(&id);
         }
         self
     }
-    pub fn get_component<T: Component>(&self) -> Option<T> {
+    pub fn get_component<T: Component + Clone>(&self) -> Option<T> {
         let ref components = self.data.borrow().components;
         let id = Id::of::<T>();
 
@@ -158,21 +162,27 @@ impl Entity {
         }
     }
 
-    pub fn __set_scene(&self, scene: Scene){
+    pub fn __set_scene(&self, scene: Scene) {
         let mut entity_data = self.data.borrow_mut();
 
         for child in entity_data.children.iter() {
             scene.add_entity(child.clone());
         }
+        for (_, component) in entity_data.components.iter() {
+            scene.__add_component(component);
+        }
 
         entity_data.scene = Some(scene);
     }
-    pub fn __remove_scene(&self, scene: Scene){
+    pub fn __remove_scene(&self, scene: Scene) {
         {
             let mut entity_data = self.data.borrow_mut();
 
             for child in entity_data.children.iter() {
                 scene.remove_entity(child.clone());
+            }
+            for (_, component) in entity_data.components.iter() {
+                scene.__remove_component(component);
             }
 
             entity_data.depth = 0;

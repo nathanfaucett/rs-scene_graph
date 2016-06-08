@@ -1,4 +1,4 @@
-#![feature(collections, alloc, core_intrinsics, reflect_marker)]
+#![feature(collections, alloc, core_intrinsics, reflect_marker, raw, get_type_id)]
 #![no_std]
 
 
