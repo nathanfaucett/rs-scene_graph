@@ -34,7 +34,7 @@ impl SomeComponentManager {
     }
 }
 impl ComponentManager for SomeComponentManager {
-    fn order(&self) -> usize { 9999 }
+    fn order(&self) -> usize { 0 }
     fn is_empty(&self) -> bool {
         self.data.borrow().components.len() == 0
     }

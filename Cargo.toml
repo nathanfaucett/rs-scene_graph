@@ -9,7 +9,3 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/nathanfaucett/rs-scene_graph.git"
 homepage = "https://github.com/nathanfaucett/rs-scene_graph"
-
-
-[dependencies.mat32]
-git = "https://github.com/nathanfaucett/rs-mat32.git"
