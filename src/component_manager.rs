@@ -13,9 +13,8 @@ pub trait ComponentManager: Any {
     fn is_empty(&self) -> bool;
     fn sort(&self);
 
-    fn clear(&self);
+    fn destroy(&self);
     fn init(&self);
-    fn awake(&self);
     fn update(&self);
 
     fn add_component(&self, component: &Box<Component>);

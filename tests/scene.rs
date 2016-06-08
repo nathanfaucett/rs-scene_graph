@@ -40,9 +40,8 @@ impl ComponentManager for SomeComponentManager {
     }
     fn sort(&self) {}
 
-    fn clear(&self) {}
+    fn destroy(&self) {}
     fn init(&self) {}
-    fn awake(&self) {}
     fn update(&self) {}
 
     fn add_component(&self, component: &Box<Component>) {

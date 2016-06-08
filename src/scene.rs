@@ -11,6 +11,7 @@ use component_manager::ComponentManager;
 
 
 struct SceneData {
+    initted: bool,
     entities: Vec<Entity>,
     component_managers: BTreeMap<Id, Box<ComponentManager>>,
 }
@@ -25,10 +26,19 @@ impl Scene {
     pub fn new() -> Self {
         Scene {
             data: Arc::new(RefCell::new(SceneData {
+                initted: false,
                 entities: Vec::new(),
+                component_managers_initted: BTreeMap::new(),
                 component_managers: BTreeMap::new(),
             }))
         }
+    }
+
+    pub fn update(&self) -> &Self {
+        for (_, component_manager) in self.data.borrow().component_managers.iter() {
+            component_manager.update();
+        }
+        self
     }
 
     pub fn add_entity(&self, entity: Entity) -> &Self {
@@ -75,7 +85,9 @@ impl Scene {
         let id = component.component_manager_id();
 
         if !component_managers.contains_key(&id) {
-            component_managers.insert(id, component.component_manager());
+            let component_manager = component.component_manager();
+            component_manager.init();
+            component_managers.insert(id, component_manager);
         }
 
         let component_manager = component_managers.get(&id).unwrap();
@@ -93,6 +105,7 @@ impl Scene {
         }
 
         if is_empty {
+            component_managers.get(&id).unwrap().destroy();
             component_managers.remove(&id);
         }
     }
