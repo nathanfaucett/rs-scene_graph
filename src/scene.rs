@@ -14,6 +14,7 @@ struct SceneData {
     initted: bool,
     entities: Vec<Entity>,
     component_managers: BTreeMap<Id, Box<ComponentManager>>,
+    component_managers_initted: BTreeMap<Id, bool>,
 }
 
 #[derive(Clone)]
@@ -28,10 +29,26 @@ impl Scene {
             data: Arc::new(RefCell::new(SceneData {
                 initted: false,
                 entities: Vec::new(),
-                component_managers_initted: BTreeMap::new(),
                 component_managers: BTreeMap::new(),
+                component_managers_initted: BTreeMap::new(),
             }))
         }
+    }
+
+    pub fn init(&self) -> &Self {
+        if !self.data.borrow().initted {
+            self.data.borrow_mut().initted = true;
+
+            for (id, component_manager) in self.data.borrow().component_managers.iter() {
+                let ref mut component_manager_initted = self.data.borrow_mut().component_managers_initted;
+
+                if !component_manager_initted.contains_key(id) {
+                    component_manager_initted.insert(id.clone(), true);
+                    component_manager.init();
+                }
+            }
+        }
+        self
     }
 
     pub fn update(&self) -> &Self {
@@ -81,32 +98,43 @@ impl Scene {
     }
 
     pub fn __add_component(&self, component: &Box<Component>) {
-        let ref mut component_managers = self.data.borrow_mut().component_managers;
         let id = component.component_manager_id();
 
-        if !component_managers.contains_key(&id) {
+        if !self.data.borrow().component_managers.contains_key(&id) {
             let component_manager = component.component_manager();
-            component_manager.init();
-            component_managers.insert(id, component_manager);
+
+            if self.data.borrow().initted && !self.data.borrow().component_managers_initted.contains_key(&id) {
+                self.data.borrow_mut().component_managers_initted.insert(id.clone(), true);
+                component_manager.init();
+            }
+            self.data.borrow_mut().component_managers.insert(id, component_manager);
         }
 
-        let component_manager = component_managers.get(&id).unwrap();
-        component_manager.add_component(component);
+        {
+            let ref component_managers = self.data.borrow().component_managers;
+            let component_manager = component_managers.get(&id).unwrap();
+            component_manager.add_component(component);
+        }
     }
     pub fn __remove_component(&self, component: &Box<Component>) {
-        let ref mut component_managers = self.data.borrow_mut().component_managers;
         let id = component.component_manager_id();
         let is_empty;
 
         {
+            let ref component_managers = self.data.borrow().component_managers;
             let component_manager = component_managers.get(&id).unwrap();
             is_empty = component_manager.is_empty();
             component_manager.remove_component(component);
         }
 
         if is_empty {
-            component_managers.get(&id).unwrap().destroy();
-            component_managers.remove(&id);
+            if self.data.borrow().component_managers_initted.contains_key(&id) {
+                self.data.borrow_mut().component_managers_initted.remove(&id);
+            }
+            if self.data.borrow().initted {
+                self.data.borrow().component_managers.get(&id).unwrap().destroy();
+            }
+            self.data.borrow_mut().component_managers.remove(&id);
         }
     }
 }
