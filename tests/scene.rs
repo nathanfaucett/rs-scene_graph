@@ -127,7 +127,22 @@ fn test_scene() {
     let some_component = grandparent.get_component::<SomeComponent>().unwrap();
     assert!(some_component.hello() == "Hello, world!".to_string());
 
-    assert!(scene.has_entity(grandparent) == true);
-    assert!(scene.has_entity(parent) == true);
-    assert!(scene.has_entity(child) == true);
+    assert!(scene.has_entity(grandparent.clone()) == true);
+    assert!(scene.has_entity(parent.clone()) == true);
+    assert!(scene.has_entity(child.clone()) == true);
+
+    grandparent.remove_component::<SomeComponent>();
+    parent.remove_component::<SomeComponent>();
+    child.remove_component::<SomeComponent>();
+
+    scene.remove_entity(child.clone());
+
+    assert!(parent.has_child(child.clone()) == false);
+    assert!(scene.has_entity(child.clone()) == false);
+
+    scene.remove_entity(grandparent.clone());
+
+    assert!(scene.has_entity(grandparent.clone()) == false);
+    assert!(scene.has_entity(parent.clone()) == false);
+    assert!(grandparent.has_child(parent.clone()) == true);
 }

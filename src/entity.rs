@@ -103,7 +103,7 @@ impl Entity {
         match children.iter().position(|c| *c == child) {
             Some(i) => {
                 {
-                    let mut child_data = self.data.borrow_mut();
+                    let mut child_data = child.data.borrow_mut();
                     child_data.depth = 0;
                     child_data.parent = None;
                 }
@@ -116,12 +116,15 @@ impl Entity {
     }
 
     pub fn add_component<T: Component + Clone>(&self, component: T) -> &Self {
-        let ref mut components = self.data.borrow_mut().components;
         let id = Id::of::<T>();
 
-        if !components.contains_key(&id) {
+        if !self.data.borrow().components.contains_key(&id) {
+            if let Some(scene) = self.scene() {
+                scene.__add_component(&(Box::new(component.clone()) as Box<Component>));
+            }
             component.set_entity(Some(self.clone()));
-            components.insert(id, Box::new(component));
+            self.data.borrow_mut().components.insert(id, Box::new(component));
+
         }
         self
     }
@@ -129,15 +132,20 @@ impl Entity {
         self.data.borrow().components.contains_key(&Id::of::<T>())
     }
     pub fn remove_component<T: Component + Clone>(&self) -> &Self {
-        let ref mut components = self.data.borrow_mut().components;
         let id = Id::of::<T>();
 
-        if components.contains_key(&id) {
+        if self.data.borrow().components.contains_key(&id) {
             {
+                let ref components = self.data.borrow().components;
                 let component = components.get(&Id::of::<T>()).unwrap();
+
+                if let Some(scene) = self.scene() {
+                    scene.__remove_component(component);
+                }
+
                 component.set_entity(None);
             }
-            components.remove(&id);
+            self.data.borrow_mut().components.remove(&id);
         }
         self
     }
@@ -181,21 +189,28 @@ impl Entity {
         entity_data.scene = Some(scene);
     }
     pub fn __remove_scene(&self, scene: Scene) {
+        if let Some(parent) = self.parent() {
+            parent.remove_child(self.clone());
+        }
+
         {
             let mut entity_data = self.data.borrow_mut();
 
-            for child in entity_data.children.iter() {
-                scene.remove_entity(child.clone());
-            }
             for (_, component) in entity_data.components.iter() {
                 scene.__remove_component(component);
             }
 
             entity_data.depth = 0;
             entity_data.scene = None;
-            entity_data.parent = None;
         }
+
+        self.__remove_scene_children(scene);
         self.update_children_depth();
+    }
+    pub fn __remove_scene_children(&self, scene: Scene) {
+        for child in self.data.borrow_mut().children.iter() {
+            scene.__remove_entity(child.clone());
+        }
     }
 }
 
