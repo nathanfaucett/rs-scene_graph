@@ -155,13 +155,17 @@ impl Entity {
             None
         }
     }
+    pub fn each_component<F>(&self, func: F) where F: Fn(&Box<Component>) {
+        for (_, component) in self.data.borrow().components.iter() {
+            func(component);
+        }
+    }
 
     pub fn each_child<F>(&self, func: F) where F: Fn(&Entity) {
         for child in self.data.borrow().children.iter() {
             func(child);
         }
     }
-
     fn update_children_depth(&self) {
         let entity = self.data.borrow_mut();
 

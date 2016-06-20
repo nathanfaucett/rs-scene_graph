@@ -92,6 +92,12 @@ impl Scene {
         self
     }
 
+    pub fn each_entity<F>(&self, func: F) where F: Fn(&Entity) {
+        for entity in self.data.borrow().entities.iter() {
+            func(entity);
+        }
+    }
+
     pub fn get_component_manager<T: ComponentManager + Clone>(&self) -> Option<T> {
         let ref component_managers_map = self.data.borrow().component_managers_map;
         let id = Id::of::<T>();
@@ -102,6 +108,12 @@ impl Scene {
             Some(component_manager.clone())
         } else {
             None
+        }
+    }
+
+    pub fn each_component_manager<F>(&self, func: F) where F: Fn(&Box<ComponentManager>) {
+        for component_manager in self.data.borrow().component_managers.iter() {
+            func(&component_manager.borrow());
         }
     }
 
