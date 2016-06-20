@@ -14,7 +14,8 @@ struct SceneData {
     initted: bool,
     entities: Vec<Entity>,
     component_managers_initted: BTreeMap<Id, bool>,
-    component_managers: BTreeMap<Id, Box<ComponentManager>>,
+    component_managers_map: BTreeMap<Id, Arc<RefCell<Box<ComponentManager>>>>,
+    component_managers: Vec<Arc<RefCell<Box<ComponentManager>>>>,
 }
 
 #[derive(Clone)]
@@ -30,18 +31,26 @@ impl Scene {
                 initted: false,
                 entities: Vec::new(),
                 component_managers_initted: BTreeMap::new(),
-                component_managers: BTreeMap::new(),
+                component_managers_map: BTreeMap::new(),
+                component_managers: Vec::new(),
             }))
         }
+    }
+
+    pub fn initted(&self) -> bool {
+        self.data.borrow().initted
     }
 
     pub fn init(&self) -> &Self {
         if !self.data.borrow().initted {
             let ref mut component_managers_initted = self.data.borrow_mut().component_managers_initted;
 
-            for (id, component_manager) in self.data.borrow().component_managers.iter() {
-                if !component_managers_initted.contains_key(id) {
-                    component_managers_initted.insert(id.clone(), true);
+            for component_manager in self.data.borrow().component_managers.iter() {
+                let component_manager = component_manager.borrow();
+                let id = component_manager.id();
+
+                if !component_managers_initted.contains_key(&id) {
+                    component_managers_initted.insert(id, true);
                     component_manager.init();
                 }
             }
@@ -50,8 +59,8 @@ impl Scene {
     }
 
     pub fn update(&self) -> &Self {
-        for (_, component_manager) in self.data.borrow().component_managers.iter() {
-            component_manager.update();
+        for component_manager in self.data.borrow().component_managers.iter() {
+            component_manager.borrow().update();
         }
         self
     }
@@ -83,6 +92,25 @@ impl Scene {
         self
     }
 
+    pub fn get_component_manager<T: ComponentManager + Clone>(&self) -> Option<T> {
+        let ref component_managers_map = self.data.borrow().component_managers_map;
+        let id = Id::of::<T>();
+
+        if component_managers_map.contains_key(&id) {
+            let ref_component_manager = component_managers_map.get(&id).unwrap().borrow();
+            let component_manager = ref_component_manager.downcast_ref::<T>().unwrap();
+            Some(component_manager.clone())
+        } else {
+            None
+        }
+    }
+
+    fn sort_component_managers(&self) {
+        self.data.borrow_mut().component_managers.sort_by(|a, b| {
+            a.borrow().order().cmp(&b.borrow().order())
+        });
+    }
+
     pub fn __remove_entity(&self, entity: Entity) -> bool {
         let removed;
         {
@@ -108,19 +136,28 @@ impl Scene {
 
     pub fn __add_component(&self, component: &Box<Component>) {
         let id = component.component_manager_id();
+        let contains_key = self.data.borrow().component_managers_map.contains_key(&id);
+        let component_manager;
 
-        if !self.data.borrow().component_managers.contains_key(&id) {
-            let component_manager = component.component_manager();
-            self.data.borrow_mut().component_managers.insert(id, component_manager);
+        if !contains_key {
+            component_manager = Arc::new(RefCell::new(component.new_component_manager()));
+            self.data.borrow_mut().component_managers_map.insert(id, component_manager.clone());
+            self.data.borrow_mut().component_managers.push(component_manager.clone());
+
+            if self.initted() {
+                self.sort_component_managers();
+            }
+        } else {
+            component_manager = self.data.borrow().component_managers_map.get(&id).unwrap().clone();
         }
 
-        self.data.borrow().component_managers.get(&id).unwrap().add_component(component);
+        component_manager.borrow().add_component(component);
 
-        if self.data.borrow().initted {
+        if self.initted() {
             if !self.data.borrow().component_managers_initted.contains_key(&id) {
                 self.data.borrow_mut().component_managers_initted.insert(id, true);
             }
-            self.data.borrow().component_managers.get(&id).unwrap().init();
+            component_manager.borrow().init();
         }
     }
     pub fn __remove_component(&self, component: &Box<Component>) {
@@ -128,8 +165,8 @@ impl Scene {
         let is_empty;
 
         {
-            let ref component_managers = self.data.borrow().component_managers;
-            let component_manager = component_managers.get(&id).unwrap();
+            let ref component_managers_map = self.data.borrow().component_managers_map;
+            let component_manager = component_managers_map.get(&id).unwrap().borrow();
             is_empty = component_manager.is_empty();
             component_manager.remove_component(component);
         }
@@ -137,11 +174,20 @@ impl Scene {
         if is_empty {
             {
                 let ref mut component_managers = self.data.borrow_mut().component_managers;
-                component_managers.get(&id).unwrap().destroy();
-                component_managers.remove(&id);
+                match component_managers.iter().position(|c| c.borrow().id() == id) {
+                    Some(i) => {
+                        component_managers[i].borrow().destroy();
+                        component_managers.remove(i);
+                    },
+                    None => {},
+                }
             }
-            if !self.data.borrow().component_managers_initted.contains_key(&id) {
-                self.data.borrow_mut().component_managers_initted.insert(id, true);
+            self.data.borrow_mut().component_managers_map.remove(&id);
+
+            if self.initted() {
+                if self.data.borrow().component_managers_initted.contains_key(&id) {
+                    self.data.borrow_mut().component_managers_initted.remove(&id);
+                }
             }
         }
     }

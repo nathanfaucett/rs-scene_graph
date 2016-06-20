@@ -4,14 +4,16 @@ use core::any::TypeId;
 use core::raw::TraitObject;
 use core::mem::transmute;
 
+use id::Id;
 use component::Component;
 
 
 pub trait ComponentManager: Any {
 
+    fn id(&self) -> Id;
+
     fn order(&self) -> usize;
     fn is_empty(&self) -> bool;
-    fn sort(&self);
 
     fn destroy(&self);
     fn init(&self);

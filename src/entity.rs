@@ -1,5 +1,5 @@
-use collections::vec::Vec;
 use collections::btree_map::BTreeMap;
+use collections::vec::Vec;
 use collections::boxed::Box;
 use alloc::arc::Arc;
 use core::cell::RefCell;
@@ -68,9 +68,8 @@ impl Entity {
 
     pub fn add_child(&self, child: Entity) -> &Self {
         if *self != child {
-            let parent = child.parent();
-            if parent != None {
-                parent.unwrap().remove_child(child.clone());
+            if let Some(parent) = child.parent() {
+                parent.remove_child(child.clone());
             }
 
             self.data.borrow_mut().children.push(child.clone());
@@ -82,17 +81,14 @@ impl Entity {
             }
             child.update_children_depth();
 
-            let scene = self.scene();
-            if scene != None {
-                scene.unwrap().add_entity(child.clone());
+            if let Some(scene) = self.scene() {
+                scene.add_entity(child.clone());
             }
         }
         self
     }
     pub fn has_child(&self, child: Entity) -> bool {
-        let ref children = self.data.borrow().children;
-
-        match children.iter().position(|c| *c == child) {
+        match self.data.borrow().children.iter().position(|c| *c == child) {
             Some(_) => true,
             None => false,
         }
@@ -124,7 +120,6 @@ impl Entity {
             }
             component.set_entity(Some(self.clone()));
             self.data.borrow_mut().components.insert(id, Box::new(component));
-
         }
         self
     }

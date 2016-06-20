@@ -34,11 +34,13 @@ impl SomeComponentManager {
     }
 }
 impl ComponentManager for SomeComponentManager {
+
+    fn id(&self) -> Id { Id::of::<SomeComponentManager>() }
+
     fn order(&self) -> usize { 0 }
     fn is_empty(&self) -> bool {
         self.data.borrow().components.len() == 0
     }
-    fn sort(&self) {}
 
     fn destroy(&self) {}
     fn init(&self) {}
@@ -81,7 +83,10 @@ impl SomeComponent {
     }
 }
 impl Component for SomeComponent {
-    fn component_manager(&self) -> Box<ComponentManager> {
+
+    fn id(&self) -> Id { Id::of::<SomeComponent>() }
+
+    fn new_component_manager(&self) -> Box<ComponentManager> {
         Box::new(SomeComponentManager::new())
     }
     fn component_manager_id(&self) -> Id {
