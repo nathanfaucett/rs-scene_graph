@@ -18,6 +18,7 @@ use scene_graph::{Scene, Entity, Component, ComponentManager, Id};
 
 
 struct SomeComponentManagerData {
+    scene: Option<Scene>,
     components: Vec<SomeComponent>,
 }
 #[derive(Clone)]
@@ -28,6 +29,7 @@ impl SomeComponentManager {
     fn new() -> SomeComponentManager {
         SomeComponentManager {
             data: Arc::new(RefCell::new(SomeComponentManagerData {
+                scene: None,
                 components: Vec::new(),
             }))
         }
@@ -36,6 +38,16 @@ impl SomeComponentManager {
 impl ComponentManager for SomeComponentManager {
 
     fn id(&self) -> Id { Id::of::<SomeComponentManager>() }
+
+    fn scene(&self) -> Option<Scene> {
+        match self.data.borrow().scene {
+            Some(ref scene) => Some(scene.clone()),
+            None => None,
+        }
+    }
+    fn set_scene(&self, scene: Option<Scene>) {
+        self.data.borrow_mut().scene = scene;
+    }
 
     fn order(&self) -> usize { 0 }
     fn is_empty(&self) -> bool {

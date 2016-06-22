@@ -149,27 +149,31 @@ impl Scene {
     pub fn __add_component(&self, component: &Box<Component>) {
         let id = component.component_manager_id();
         let contains_key = self.data.borrow().component_managers_map.contains_key(&id);
-        let component_manager;
+        let component_manager_ref;
 
         if !contains_key {
-            component_manager = Arc::new(RefCell::new(component.new_component_manager()));
-            self.data.borrow_mut().component_managers_map.insert(id, component_manager.clone());
-            self.data.borrow_mut().component_managers.push(component_manager.clone());
+            let component_manager = component.new_component_manager();
+            component_manager.set_scene(Some(self.clone()));
+
+            component_manager_ref = Arc::new(RefCell::new(component_manager));
+
+            self.data.borrow_mut().component_managers_map.insert(id, component_manager_ref.clone());
+            self.data.borrow_mut().component_managers.push(component_manager_ref.clone());
 
             if self.initted() {
                 self.sort_component_managers();
             }
         } else {
-            component_manager = self.data.borrow().component_managers_map.get(&id).unwrap().clone();
+            component_manager_ref = self.data.borrow().component_managers_map.get(&id).unwrap().clone();
         }
 
-        component_manager.borrow().add_component(component);
+        component_manager_ref.borrow().add_component(component);
 
         if self.initted() {
             if !self.data.borrow().component_managers_initted.contains_key(&id) {
                 self.data.borrow_mut().component_managers_initted.insert(id, true);
             }
-            component_manager.borrow().init();
+            component_manager_ref.borrow().init();
         }
     }
     pub fn __remove_component(&self, component: &Box<Component>) {
@@ -188,7 +192,11 @@ impl Scene {
                 let ref mut component_managers = self.data.borrow_mut().component_managers;
                 match component_managers.iter().position(|c| c.borrow().id() == id) {
                     Some(i) => {
-                        component_managers[i].borrow().destroy();
+                        {
+                            let component_manager = component_managers[i].borrow();
+                            component_manager.set_scene(None);
+                            component_manager.destroy();
+                        }
                         component_managers.remove(i);
                     },
                     None => {},
