@@ -42,18 +42,31 @@ impl Scene {
     }
 
     pub fn init(&self) -> &Self {
-        if !self.data.borrow().initted {
-            let ref mut component_managers_initted = self.data.borrow_mut().component_managers_initted;
+        if !self.initted() {
+            let mut initted = BTreeMap::new();
+            {
+                let data = self.data.borrow();
+                let ref component_managers = data.component_managers;
+                let ref component_managers_initted = data.component_managers_initted;
 
-            for component_manager in self.data.borrow().component_managers.iter() {
-                let component_manager = component_manager.borrow();
-                let id = component_manager.id();
+                for component_manager in component_managers.iter() {
+                    let component_manager = component_manager.borrow();
+                    let id = component_manager.id();
 
-                if !component_managers_initted.contains_key(&id) {
-                    component_managers_initted.insert(id, true);
-                    component_manager.init();
+                    if !component_managers_initted.contains_key(&id) {
+                        initted.insert(id, true);
+                        component_manager.init();
+                    }
                 }
             }
+            {
+                let ref mut component_managers_initted = self.data.borrow_mut().component_managers_initted;
+                for (id, _) in initted.iter() {
+                    component_managers_initted.insert(id.clone(), true);
+                }
+            }
+
+            self.data.borrow_mut().initted = true;
         }
         self
     }

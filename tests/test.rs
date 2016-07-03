@@ -137,6 +137,8 @@ fn test_scene() {
 
     scene.add_entity(grandparent.clone());
 
+    scene.init();
+
     assert!(grandparent.has_component::<SomeComponent>() == true);
     assert!(parent.has_component::<SomeComponent>() == true);
     assert!(child.has_component::<SomeComponent>() == true);
