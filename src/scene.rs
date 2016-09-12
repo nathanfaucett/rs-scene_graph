@@ -1,7 +1,7 @@
 use collections::vec::Vec;
 use collections::btree_map::BTreeMap;
 use collections::boxed::Box;
-use alloc::arc::Arc;
+use alloc::rc::Rc;
 use core::cell::RefCell;
 
 use id::Id;
@@ -14,20 +14,20 @@ struct SceneData {
     initted: bool,
     entities: Vec<Entity>,
     component_managers_initted: BTreeMap<Id, bool>,
-    component_managers_map: BTreeMap<Id, Arc<RefCell<Box<ComponentManager>>>>,
-    component_managers: Vec<Arc<RefCell<Box<ComponentManager>>>>,
+    component_managers_map: BTreeMap<Id, Rc<RefCell<Box<ComponentManager>>>>,
+    component_managers: Vec<Rc<RefCell<Box<ComponentManager>>>>,
 }
 
 #[derive(Clone)]
 pub struct Scene {
-    data: Arc<RefCell<SceneData>>,
+    data: Rc<RefCell<SceneData>>,
 }
 
 impl Scene {
 
     pub fn new() -> Self {
         Scene {
-            data: Arc::new(RefCell::new(SceneData {
+            data: Rc::new(RefCell::new(SceneData {
                 initted: false,
                 entities: Vec::new(),
                 component_managers_initted: BTreeMap::new(),
@@ -168,7 +168,7 @@ impl Scene {
             let component_manager = component.new_component_manager();
             component_manager.set_scene(Some(self.clone()));
 
-            component_manager_ref = Arc::new(RefCell::new(component_manager));
+            component_manager_ref = Rc::new(RefCell::new(component_manager));
 
             self.data.borrow_mut().component_managers_map.insert(id, component_manager_ref.clone());
             self.data.borrow_mut().component_managers.push(component_manager_ref.clone());

@@ -11,7 +11,7 @@ use collections::string::String;
 use collections::string::ToString;
 use collections::vec::Vec;
 use collections::boxed::Box;
-use alloc::arc::Arc;
+use alloc::rc::Rc;
 use core::cell::RefCell;
 
 use scene_graph::{Scene, Entity, Component, ComponentManager, Id};
@@ -23,12 +23,12 @@ struct SomeComponentManagerData {
 }
 #[derive(Clone)]
 pub struct SomeComponentManager {
-    data: Arc<RefCell<SomeComponentManagerData>>,
+    data: Rc<RefCell<SomeComponentManagerData>>,
 }
 impl SomeComponentManager {
     fn new() -> SomeComponentManager {
         SomeComponentManager {
-            data: Arc::new(RefCell::new(SomeComponentManagerData {
+            data: Rc::new(RefCell::new(SomeComponentManagerData {
                 scene: None,
                 components: Vec::new(),
             }))
@@ -80,12 +80,12 @@ struct SomeComponentData {
 }
 #[derive(Clone)]
 pub struct SomeComponent {
-    data: Arc<RefCell<SomeComponentData>>,
+    data: Rc<RefCell<SomeComponentData>>,
 }
 impl SomeComponent {
     pub fn new() -> Self {
         SomeComponent {
-            data: Arc::new(RefCell::new(SomeComponentData {
+            data: Rc::new(RefCell::new(SomeComponentData {
                 entity: None,
             }))
         }

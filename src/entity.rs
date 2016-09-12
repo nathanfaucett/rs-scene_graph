@@ -1,7 +1,7 @@
 use collections::btree_map::BTreeMap;
 use collections::vec::Vec;
 use collections::boxed::Box;
-use alloc::arc::Arc;
+use alloc::rc::Rc;
 use core::cell::RefCell;
 
 use id::Id;
@@ -19,14 +19,14 @@ struct EntityData {
 
 #[derive(Clone)]
 pub struct Entity {
-    data: Arc<RefCell<EntityData>>,
+    data: Rc<RefCell<EntityData>>,
 }
 
 impl Entity {
 
     pub fn new() -> Self {
         Entity {
-            data: Arc::new(RefCell::new(EntityData {
+            data: Rc::new(RefCell::new(EntityData {
                 depth: 0,
                 scene: None,
                 parent: None,
