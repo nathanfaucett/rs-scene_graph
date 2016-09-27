@@ -8,12 +8,12 @@ use component::Component;
 
 pub trait ComponentManager: Any {
 
-    fn id(&self) -> Id;
+    fn get_id(&self) -> Id;
 
-    fn scene(&self) -> Option<Scene>;
+    fn get_scene(&self) -> Option<Scene>;
     fn set_scene(&self, scene: Option<Scene>);
 
-    fn order(&self) -> usize;
+    fn get_order(&self) -> usize;
     fn is_empty(&self) -> bool;
 
     fn destroy(&self);

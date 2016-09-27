@@ -37,9 +37,9 @@ impl SomeComponentManager {
 }
 impl ComponentManager for SomeComponentManager {
 
-    fn id(&self) -> Id { Id::of::<SomeComponentManager>() }
+    fn get_id(&self) -> Id { Id::of::<SomeComponentManager>() }
 
-    fn scene(&self) -> Option<Scene> {
+    fn get_scene(&self) -> Option<Scene> {
         match self.data.borrow().scene {
             Some(ref scene) => Some(scene.clone()),
             None => None,
@@ -49,7 +49,7 @@ impl ComponentManager for SomeComponentManager {
         self.data.borrow_mut().scene = scene;
     }
 
-    fn order(&self) -> usize { 0 }
+    fn get_order(&self) -> usize { 0 }
     fn is_empty(&self) -> bool {
         self.data.borrow().components.len() == 0
     }
@@ -96,15 +96,15 @@ impl SomeComponent {
 }
 impl Component for SomeComponent {
 
-    fn id(&self) -> Id { Id::of::<SomeComponent>() }
+    fn get_id(&self) -> Id { Id::of::<SomeComponent>() }
 
     fn new_component_manager(&self) -> Box<ComponentManager> {
         Box::new(SomeComponentManager::new())
     }
-    fn component_manager_id(&self) -> Id {
+    fn get_component_manager_id(&self) -> Id {
         Id::of::<SomeComponentManager>()
     }
-    fn entity(&self) -> Option<Entity> {
+    fn get_entity(&self) -> Option<Entity> {
         self.data.borrow().entity.clone()
     }
     fn set_entity(&self, entity: Option<Entity>) {

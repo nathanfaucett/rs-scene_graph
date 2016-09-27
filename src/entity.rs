@@ -36,11 +36,11 @@ impl Entity {
         }
     }
 
-    pub fn depth(&self) -> usize {
+    pub fn get_depth(&self) -> usize {
         self.data.borrow().depth
     }
 
-    pub fn scene(&self) -> Option<Scene> {
+    pub fn get_scene(&self) -> Option<Scene> {
         match self.data.borrow().scene {
             Some(ref scene) => Some(scene.clone()),
             None => None,
@@ -53,7 +53,7 @@ impl Entity {
         }
     }
 
-    pub fn parent(&self) -> Option<Entity> {
+    pub fn get_parent(&self) -> Option<Entity> {
         match self.data.borrow().parent {
             Some(ref parent) => Some(parent.clone()),
             None => None,
@@ -68,7 +68,7 @@ impl Entity {
 
     pub fn add_child(&self, child: Entity) -> &Self {
         if *self != child {
-            if let Some(parent) = child.parent() {
+            if let Some(parent) = child.get_parent() {
                 parent.remove_child(child.clone());
             }
 
@@ -76,12 +76,12 @@ impl Entity {
 
             {
                 let mut child_data = child.data.borrow_mut();
-                child_data.depth = self.depth() + 1;
+                child_data.depth = self.get_depth() + 1;
                 child_data.parent = Some(self.clone());
             }
             child.update_children_depth();
 
-            if let Some(scene) = self.scene() {
+            if let Some(scene) = self.get_scene() {
                 scene.add_entity(child.clone());
             }
         }
@@ -115,7 +115,7 @@ impl Entity {
         let id = Id::of::<T>();
 
         if !self.data.borrow().components.contains_key(&id) {
-            if let Some(scene) = self.scene() {
+            if let Some(scene) = self.get_scene() {
                 scene.__add_component(&(Box::new(component.clone()) as Box<Component>));
             }
             component.set_entity(Some(self.clone()));
@@ -134,7 +134,7 @@ impl Entity {
                 let ref components = self.data.borrow().components;
                 let component = components.get(&Id::of::<T>()).unwrap();
 
-                if let Some(scene) = self.scene() {
+                if let Some(scene) = self.get_scene() {
                     scene.__remove_component(component);
                 }
 
@@ -155,13 +155,13 @@ impl Entity {
             None
         }
     }
-    pub fn each_component<F>(&self, func: F) where F: Fn(&Box<Component>) {
+    pub fn for_each_component<F>(&self, func: F) where F: Fn(&Box<Component>) {
         for (_, component) in self.data.borrow().components.iter() {
             func(component);
         }
     }
 
-    pub fn each_child<F>(&self, func: F) where F: Fn(&Entity) {
+    pub fn for_each_child<F>(&self, func: F) where F: Fn(&Entity) {
         for child in self.data.borrow().children.iter() {
             func(child);
         }
@@ -188,7 +188,7 @@ impl Entity {
         entity_data.scene = Some(scene);
     }
     pub fn __remove_scene(&self, scene: Scene) {
-        if let Some(parent) = self.parent() {
+        if let Some(parent) = self.get_parent() {
             parent.remove_child(self.clone());
         }
 

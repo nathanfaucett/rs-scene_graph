@@ -51,7 +51,7 @@ impl Scene {
 
                 for component_manager in component_managers.iter() {
                     let component_manager = component_manager.borrow();
-                    let id = component_manager.id();
+                    let id = component_manager.get_id();
 
                     if !component_managers_initted.contains_key(&id) {
                         initted.insert(id, true);
@@ -79,7 +79,7 @@ impl Scene {
     }
 
     pub fn add_entity(&self, entity: Entity) -> &Self {
-        if let Some(scene) = entity.scene() {
+        if let Some(scene) = entity.get_scene() {
             if scene != *self {
                 scene.remove_entity(entity.clone());
             } else {
@@ -105,7 +105,7 @@ impl Scene {
         self
     }
 
-    pub fn each_entity<F>(&self, func: F) where F: Fn(&Entity) {
+    pub fn for_each_entity<F>(&self, func: F) where F: Fn(&Entity) {
         for entity in self.data.borrow().entities.iter() {
             func(entity);
         }
@@ -124,7 +124,7 @@ impl Scene {
         }
     }
 
-    pub fn each_component_manager<F>(&self, func: F) where F: Fn(&Box<ComponentManager>) {
+    pub fn for_each_component_manager<F>(&self, func: F) where F: Fn(&Box<ComponentManager>) {
         for component_manager in self.data.borrow().component_managers.iter() {
             func(&component_manager.borrow());
         }
@@ -132,7 +132,7 @@ impl Scene {
 
     fn sort_component_managers(&self) {
         self.data.borrow_mut().component_managers.sort_by(|a, b| {
-            a.borrow().order().cmp(&b.borrow().order())
+            a.borrow().get_order().cmp(&b.borrow().get_order())
         });
     }
 
@@ -160,7 +160,7 @@ impl Scene {
     }
 
     pub fn __add_component(&self, component: &Box<Component>) {
-        let id = component.component_manager_id();
+        let id = component.get_component_manager_id();
         let contains_key = self.data.borrow().component_managers_map.contains_key(&id);
         let component_manager_ref;
 
@@ -190,7 +190,7 @@ impl Scene {
         }
     }
     pub fn __remove_component(&self, component: &Box<Component>) {
-        let id = component.component_manager_id();
+        let id = component.get_component_manager_id();
         let is_empty;
 
         {
@@ -203,7 +203,7 @@ impl Scene {
         if is_empty {
             {
                 let ref mut component_managers = self.data.borrow_mut().component_managers;
-                match component_managers.iter().position(|c| c.borrow().id() == id) {
+                match component_managers.iter().position(|c| c.borrow().get_id() == id) {
                     Some(i) => {
                         {
                             let component_manager = component_managers[i].borrow();

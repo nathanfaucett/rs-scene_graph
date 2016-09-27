@@ -19,10 +19,10 @@ impl Id {
         }
     }
 
-    pub fn id(&self) -> u64 {
+    pub fn get_id(&self) -> u64 {
         self.t
     }
-    pub fn type_id(&self) -> TypeId {
+    pub fn get_type_id(&self) -> TypeId {
         self.type_id
     }
 }

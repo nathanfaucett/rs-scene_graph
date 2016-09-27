@@ -8,12 +8,12 @@ use component_manager::ComponentManager;
 
 pub trait Component: Any {
 
-    fn id(&self) -> Id;
+    fn get_id(&self) -> Id;
 
     fn new_component_manager(&self) -> Box<ComponentManager>;
-    fn component_manager_id(&self) -> Id;
+    fn get_component_manager_id(&self) -> Id;
 
-    fn entity(&self) -> Option<Entity>;
+    fn get_entity(&self) -> Option<Entity>;
     fn set_entity(&self, entity: Option<Entity>);
 }
 
