@@ -11,17 +11,17 @@ pub trait ComponentManager: Any {
     fn get_id(&self) -> Id;
 
     fn get_scene(&self) -> Option<Scene>;
-    fn set_scene(&self, scene: Option<Scene>);
+    fn set_scene(&mut self, scene: Option<Scene>);
 
     fn get_order(&self) -> usize;
     fn is_empty(&self) -> bool;
 
-    fn destroy(&self);
-    fn init(&self);
-    fn update(&self);
+    fn clear(&mut self);
+    fn init(&mut self);
+    fn update(&mut self);
 
-    fn add_component(&self, component: &Box<Component>);
-    fn remove_component(&self, component: &Box<Component>);
+    fn add_component(&mut self, component: &Box<Component>);
+    fn remove_component(&mut self, component: &Box<Component>);
 }
 
 impl ComponentManager {

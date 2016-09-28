@@ -1,12 +1,13 @@
-#![feature(collections, alloc, core_intrinsics, reflect_marker, raw, get_type_id)]
+#![feature(collections, core_intrinsics, reflect_marker, raw, get_type_id)]
 #![no_std]
 
 
-extern crate alloc;
 extern crate collections;
 
 #[macro_use]
 extern crate impl_any;
+extern crate shared;
+
 
 
 mod scene;

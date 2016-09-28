@@ -12,3 +12,6 @@ homepage = "https://github.com/nathanfaucett/rs-scene_graph"
 
 [dependencies.impl_any]
 git = "https://github.com/nathanfaucett/rs-impl_any.git"
+
+[dependencies.shared]
+git = "https://github.com/nathanfaucett/rs-shared.git"

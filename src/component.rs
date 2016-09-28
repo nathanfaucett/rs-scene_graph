@@ -14,7 +14,7 @@ pub trait Component: Any {
     fn get_component_manager_id(&self) -> Id;
 
     fn get_entity(&self) -> Option<Entity>;
-    fn set_entity(&self, entity: Option<Entity>);
+    fn set_entity(&mut self, entity: Option<Entity>);
 }
 
 impl Component {
