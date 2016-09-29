@@ -140,7 +140,7 @@ impl Entity {
 
         if !self.data.components.contains_key(&id) {
             if let Some(ref mut scene) = self.get_scene() {
-                scene.__add_component(&(Box::new(component.clone()) as Box<Component>));
+                scene.__add_component(&mut (Box::new(component.clone()) as Box<Component>));
             }
             component.set_entity(Some(self.clone()));
             self.data.components.insert(id, Box::new(component));
@@ -222,7 +222,7 @@ impl Entity {
         for child in entity_data.children.iter_mut() {
             scene.add_entity(child);
         }
-        for (_, component) in entity_data.components.iter() {
+        for (_, component) in entity_data.components.iter_mut() {
             scene.__add_component(component);
         }
 

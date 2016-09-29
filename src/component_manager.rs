@@ -20,8 +20,8 @@ pub trait ComponentManager: Any {
     fn init(&mut self);
     fn update(&mut self);
 
-    fn add_component(&mut self, component: &Box<Component>);
-    fn remove_component(&mut self, component: &Box<Component>);
+    fn add_component(&mut self, component: &mut Box<Component>);
+    fn remove_component(&mut self, component: &mut Box<Component>);
 }
 
 impl ComponentManager {

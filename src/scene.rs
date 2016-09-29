@@ -170,7 +170,7 @@ impl Scene {
         removed
     }
 
-    pub fn __add_component(&mut self, component: &Box<Component>) {
+    pub fn __add_component(&mut self, component: &mut Box<Component>) {
         let id = component.get_component_manager_id();
         let contains_key = self.data.component_managers_map.contains_key(&id);
         let mut component_manager_ref;

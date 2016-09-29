@@ -59,11 +59,11 @@ impl ComponentManager for SomeComponentManager {
     fn init(&mut self) {}
     fn update(&mut self) {}
 
-    fn add_component(&mut self, component: &Box<Component>) {
+    fn add_component(&mut self, component: &mut Box<Component>) {
         let component = component.downcast_ref::<SomeComponent>().unwrap();
         self.data.components.push(component.clone());
     }
-    fn remove_component(&mut self, component: &Box<Component>) {
+    fn remove_component(&mut self, component: &mut Box<Component>) {
         let component = component.downcast_ref::<SomeComponent>().unwrap();
         let ref mut components = self.data.components;
 
