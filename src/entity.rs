@@ -151,24 +151,9 @@ impl Entity {
         self.data.components.contains_key(&Id::of::<T>())
     }
     pub fn remove_component<T: Component + Clone>(&mut self) -> &mut Self {
-        let id = Id::of::<T>();
-
-        if self.data.components.contains_key(&id) {
-            {
-                let scene = self.get_scene();
-                let ref mut data = self.data;
-                let ref mut components = data.components;
-                let component = components.get_mut(&Id::of::<T>()).unwrap();
-
-                if scene.is_some() {
-                    scene.unwrap().__remove_component(component);
-                }
-            }
-            self.data.components.remove(&id);
-        }
-        self
+        self.remove_component_by_id(&Id::of::<T>())
     }
-    pub fn remove_component_by_id<'a>(&mut self, id: &'a Id) -> &mut Self {
+    pub fn remove_component_by_id(&mut self, id: &Id) -> &mut Self {
         if self.data.components.contains_key(&id) {
             {
                 let scene = self.get_scene();

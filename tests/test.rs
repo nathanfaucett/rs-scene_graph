@@ -156,6 +156,10 @@ fn test_scene() {
     parent.remove_component::<SomeComponent>();
     child.remove_component::<SomeComponent>();
 
+    assert_eq!(grandparent.has_component::<SomeComponent>(), false);
+    assert_eq!(parent.has_component::<SomeComponent>(), false);
+    assert_eq!(child.has_component::<SomeComponent>(), false);
+
     scene.remove_entity(&mut child);
 
     assert_eq!(parent.has_child(&child), false);
