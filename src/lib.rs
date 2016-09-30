@@ -1,7 +1,13 @@
-#![feature(collections, core_intrinsics, reflect_marker, raw, get_type_id)]
+#![feature(alloc)]
+#![feature(core_intrinsics)]
+#![feature(collections)]
+#![feature(get_type_id)]
+#![feature(raw)]
+#![feature(reflect_marker)]
 #![no_std]
 
 
+extern crate alloc;
 extern crate collections;
 
 #[macro_use]

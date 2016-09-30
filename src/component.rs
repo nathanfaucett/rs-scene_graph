@@ -1,4 +1,5 @@
-use collections::boxed::Box;
+use alloc::boxed::Box;
+
 use core::any::Any;
 
 use id::Id;

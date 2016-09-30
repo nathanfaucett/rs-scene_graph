@@ -1,17 +1,18 @@
-#![no_std]
+#![feature(alloc)]
 #![feature(collections)]
+#![no_std]
 
 
+extern crate alloc;
 extern crate collections;
 
 extern crate shared;
-
 extern crate scene_graph;
 
+use alloc::boxed::Box;
 use collections::string::String;
 use collections::string::ToString;
 use collections::vec::Vec;
-use collections::boxed::Box;
 
 use shared::Shared;
 

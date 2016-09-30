@@ -1,6 +1,6 @@
+use alloc::boxed::Box;
 use collections::vec::Vec;
 use collections::btree_map::BTreeMap;
-use collections::boxed::Box;
 
 use shared::Shared;
 
