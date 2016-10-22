@@ -22,7 +22,7 @@ use remove::Remove;
 use stack::Stack;
 use shared::Shared;
 
-use scene_graph::{Scene, Entity, Component, ComponentManager, Id};
+use scene_graph::{Scene, Entity, Plugin, Component, ComponentManager, Id};
 
 
 struct SomeComponentManagerData {
@@ -129,12 +129,54 @@ impl PartialEq<SomeComponent> for SomeComponent {
 }
 
 
+struct SomePluginData {
+    scene: Option<Scene>,
+}
+#[derive(Clone)]
+pub struct SomePlugin {
+    data: Shared<SomePluginData>,
+}
+impl SomePlugin {
+    pub fn new() -> Self {
+        SomePlugin {
+            data: Shared::new(SomePluginData {
+                scene: None,
+            })
+        }
+    }
+    pub fn hello(&self) -> String {
+        "Hello, world!".to_string()
+    }
+}
+impl Plugin for SomePlugin {
+
+    fn get_id(&self) -> Id { Id::of::<SomePlugin>() }
+
+    fn get_scene(&self) -> Option<Scene> {
+        self.data.scene.clone()
+    }
+    fn set_scene(&mut self, scene: Option<Scene>) {
+        self.data.scene = scene;
+    }
+
+    fn get_order(&self) -> usize {0}
+
+    fn clear(&mut self) {}
+    fn init(&mut self) {}
+    fn before(&mut self) {}
+    fn after(&mut self) {}
+}
+
+
 #[test]
 fn test_scene() {
     let mut scene = Scene::new();
     let mut grandparent = Entity::new();
     let mut parent = Entity::new();
     let mut child = Entity::new();
+
+    let plugin = SomePlugin::new();
+    scene.add_plugin(plugin);
 
     grandparent.add_component(SomeComponent::new());
     parent.add_component(SomeComponent::new());
@@ -146,6 +188,8 @@ fn test_scene() {
     scene.add_entity(&mut grandparent);
 
     scene.init();
+
+    assert_eq!(scene.has_plugin::<SomePlugin>(), true);
 
     assert_eq!(grandparent.has_component::<SomeComponent>(), true);
     assert_eq!(parent.has_component::<SomeComponent>(), true);

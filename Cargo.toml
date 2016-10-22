@@ -10,29 +10,26 @@ readme = "README.md"
 repository = "https://github.com/nathanfaucett/rs-scene_graph.git"
 homepage = "https://github.com/nathanfaucett/rs-scene_graph"
 
+[dependencies.hash_map]
+git = "https://github.com/nathanfaucett/rs-hash_map.git"
 [dependencies.map]
 git = "https://github.com/nathanfaucett/rs-map.git"
-
 [dependencies.insert]
 git = "https://github.com/nathanfaucett/rs-insert.git"
-
 [dependencies.remove]
 git = "https://github.com/nathanfaucett/rs-remove.git"
 
+
+[dependencies.vector]
+git = "https://github.com/nathanfaucett/rs-vector.git"
 [dependencies.stack]
 git = "https://github.com/nathanfaucett/rs-stack.git"
 
 [dependencies.iterable]
 git = "https://github.com/nathanfaucett/rs-iterable.git"
-
 [dependencies.iterable_mut]
 git = "https://github.com/nathanfaucett/rs-iterable_mut.git"
 
-[dependencies.hash_map]
-git = "https://github.com/nathanfaucett/rs-hash_map.git"
-
-[dependencies.vector]
-git = "https://github.com/nathanfaucett/rs-vector.git"
 
 [dependencies.impl_any]
 git = "https://github.com/nathanfaucett/rs-impl_any.git"

@@ -20,15 +20,16 @@ extern crate insert;
 extern crate remove;
 
 
-
-mod scene;
-mod entity;
-mod component;
 mod component_manager;
+mod component;
+mod entity;
 mod id;
+mod plugin;
+mod scene;
 
-pub use scene::Scene;
-pub use entity::Entity;
-pub use component::Component;
 pub use component_manager::ComponentManager;
+pub use component::Component;
+pub use entity::Entity;
 pub use id::Id;
+pub use plugin::Plugin;
+pub use scene::Scene;
