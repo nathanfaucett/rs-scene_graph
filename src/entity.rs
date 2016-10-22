@@ -1,7 +1,13 @@
 use alloc::boxed::Box;
-use collections::btree_map::BTreeMap;
-use collections::vec::Vec;
 
+use hash_map::HashMap;
+use vector::Vector;
+use iterable::Iterable;
+use iterable_mut::IterableMut;
+use map::Map;
+use stack::Stack;
+use insert::Insert;
+use remove::Remove;
 use shared::Shared;
 
 use id::Id;
@@ -13,8 +19,8 @@ struct EntityData {
     depth: usize,
     scene: Option<Scene>,
     parent: Option<Entity>,
-    children: Vec<Entity>,
-    components: BTreeMap<Id, Box<Component>>,
+    children: Vector<Entity>,
+    components: HashMap<Id, Box<Component>>,
 }
 
 #[derive(Clone)]
@@ -30,8 +36,8 @@ impl Entity {
                 depth: 0,
                 scene: None,
                 parent: None,
-                children: Vec::new(),
-                components: BTreeMap::new(),
+                children: Vector::new(),
+                components: HashMap::new(),
             })
         }
     }
@@ -49,7 +55,7 @@ impl Entity {
             }
         }
         {
-            let keys: Vec<Id> = self.data.components.keys().cloned().collect();
+            let keys: Vector<Id> = self.data.components.keys().cloned().collect();
 
             for id in keys {
                 self.remove_component_by_id(&id);
@@ -127,7 +133,7 @@ impl Entity {
                         child_data.parent = None;
                     }
                     child.update_children_depth();
-                    children.remove(i);
+                    children.remove(&i);
                 },
                 None => (),
             }

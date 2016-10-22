@@ -6,14 +6,20 @@
 extern crate alloc;
 extern crate collections;
 
+extern crate vector;
+extern crate remove;
+extern crate stack;
 extern crate shared;
 extern crate scene_graph;
+
 
 use alloc::boxed::Box;
 use collections::string::String;
 use collections::string::ToString;
-use collections::vec::Vec;
 
+use vector::Vector;
+use remove::Remove;
+use stack::Stack;
 use shared::Shared;
 
 use scene_graph::{Scene, Entity, Component, ComponentManager, Id};
@@ -21,7 +27,7 @@ use scene_graph::{Scene, Entity, Component, ComponentManager, Id};
 
 struct SomeComponentManagerData {
     scene: Option<Scene>,
-    components: Vec<SomeComponent>,
+    components: Vector<SomeComponent>,
 }
 #[derive(Clone)]
 pub struct SomeComponentManager {
@@ -32,7 +38,7 @@ impl SomeComponentManager {
         SomeComponentManager {
             data: Shared::new(SomeComponentManagerData {
                 scene: None,
-                components: Vec::new(),
+                components: Vector::new(),
             })
         }
     }
@@ -70,7 +76,7 @@ impl ComponentManager for SomeComponentManager {
 
         match components.iter().position(|c| *c == *component) {
             Some(i) => {
-                components.remove(i);
+                components.remove(&i);
             },
             None => (),
         }

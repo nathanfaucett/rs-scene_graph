@@ -1,5 +1,4 @@
 use core::intrinsics;
-use core::marker::Reflect;
 use core::any::TypeId;
 use core::cmp::Ordering;
 
@@ -12,7 +11,7 @@ pub struct Id {
 
 impl Id {
 
-    pub fn of<T: ?Sized + Reflect + 'static>() -> Id {
+    pub fn of<T: ?Sized + 'static>() -> Id {
         Id {
             t: unsafe { intrinsics::type_id::<T>() },
             type_id: TypeId::of::<T>(),

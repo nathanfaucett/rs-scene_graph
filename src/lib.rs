@@ -1,18 +1,23 @@
 #![feature(alloc)]
 #![feature(core_intrinsics)]
-#![feature(collections)]
 #![feature(get_type_id)]
 #![feature(raw)]
-#![feature(reflect_marker)]
 #![no_std]
 
 
 extern crate alloc;
-extern crate collections;
 
 #[macro_use]
 extern crate impl_any;
 extern crate shared;
+extern crate hash_map;
+extern crate vector;
+extern crate map;
+extern crate iterable;
+extern crate iterable_mut;
+extern crate stack;
+extern crate insert;
+extern crate remove;
 
 
 

@@ -1,7 +1,13 @@
 use alloc::boxed::Box;
-use collections::vec::Vec;
-use collections::btree_map::BTreeMap;
 
+use hash_map::HashMap;
+use vector::Vector;
+use iterable::Iterable;
+use iterable_mut::IterableMut;
+use map::Map;
+use stack::Stack;
+use insert::Insert;
+use remove::Remove;
 use shared::Shared;
 
 use id::Id;
@@ -12,10 +18,10 @@ use component_manager::ComponentManager;
 
 struct SceneData {
     initted: bool,
-    entities: Vec<Entity>,
-    component_managers_initted: BTreeMap<Id, bool>,
-    component_managers_map: BTreeMap<Id, Shared<Box<ComponentManager>>>,
-    component_managers: Vec<Shared<Box<ComponentManager>>>,
+    entities: Vector<Entity>,
+    component_managers_initted: HashMap<Id, bool>,
+    component_managers_map: HashMap<Id, Shared<Box<ComponentManager>>>,
+    component_managers: Vector<Shared<Box<ComponentManager>>>,
 }
 
 #[derive(Clone)]
@@ -29,10 +35,10 @@ impl Scene {
         Scene {
             data: Shared::new(SceneData {
                 initted: false,
-                entities: Vec::new(),
-                component_managers_initted: BTreeMap::new(),
-                component_managers_map: BTreeMap::new(),
-                component_managers: Vec::new(),
+                entities: Vector::new(),
+                component_managers_initted: HashMap::new(),
+                component_managers_map: HashMap::new(),
+                component_managers: Vector::new(),
             })
         }
     }
@@ -154,7 +160,7 @@ impl Scene {
 
             match entities.iter().position(|e| *e == *entity) {
                 Some(i) => {
-                    entities.remove(i);
+                    entities.remove(&i);
                     removed = true;
                 },
                 None => {
@@ -224,7 +230,7 @@ impl Scene {
                             component_manager.set_scene(None);
                             component_manager.clear();
                         }
-                        component_managers.remove(i);
+                        component_managers.remove(&i);
                     },
                     None => {},
                 }
