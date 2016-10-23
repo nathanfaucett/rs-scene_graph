@@ -202,6 +202,8 @@ fn test_scene() {
     assert_eq!(scene.has_entity(&parent), true);
     assert_eq!(scene.has_entity(&child), true);
 
+    scene.update();
+
     grandparent.remove_component::<SomeComponent>();
     parent.remove_component::<SomeComponent>();
     child.remove_component::<SomeComponent>();
