@@ -172,6 +172,10 @@ impl Scene {
 
         plugin.set_scene(Some(self.clone()));
 
+        if self.data.initted {
+            self.sort_plugins();
+        }
+
         self
     }
     pub fn has_plugin<T: Plugin>(&self) -> bool {
