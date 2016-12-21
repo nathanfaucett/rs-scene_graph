@@ -10,29 +10,17 @@ readme = "README.md"
 repository = "https://github.com/nathanfaucett/rs-scene_graph.git"
 homepage = "https://github.com/nathanfaucett/rs-scene_graph"
 
-[dependencies.hash_map]
-git = "https://github.com/nathanfaucett/rs-hash_map.git"
-[dependencies.map]
-git = "https://github.com/nathanfaucett/rs-map.git"
-[dependencies.insert]
-git = "https://github.com/nathanfaucett/rs-insert.git"
-[dependencies.remove]
-git = "https://github.com/nathanfaucett/rs-remove.git"
+[dependencies]
+hash_map = {git = "https://github.com/nathanfaucett/rs-hash_map.git"}
+map = {git = "https://github.com/nathanfaucett/rs-map.git"}
+insert = {git = "https://github.com/nathanfaucett/rs-insert.git"}
+remove = {git = "https://github.com/nathanfaucett/rs-remove.git"}
 
+vector = {git = "https://github.com/nathanfaucett/rs-vector.git"}
+stack = {git = "https://github.com/nathanfaucett/rs-stack.git"}
 
-[dependencies.vector]
-git = "https://github.com/nathanfaucett/rs-vector.git"
-[dependencies.stack]
-git = "https://github.com/nathanfaucett/rs-stack.git"
+iterable = {git = "https://github.com/nathanfaucett/rs-iterable.git"}
+iterable_mut = {git = "https://github.com/nathanfaucett/rs-iterable_mut.git"}
 
-[dependencies.iterable]
-git = "https://github.com/nathanfaucett/rs-iterable.git"
-[dependencies.iterable_mut]
-git = "https://github.com/nathanfaucett/rs-iterable_mut.git"
-
-
-[dependencies.impl_any]
-git = "https://github.com/nathanfaucett/rs-impl_any.git"
-
-[dependencies.shared]
-git = "https://github.com/nathanfaucett/rs-shared.git"
+impl_any = {git = "https://github.com/nathanfaucett/rs-impl_any.git"}
+shared = {git = "https://github.com/nathanfaucett/rs-shared.git"}
