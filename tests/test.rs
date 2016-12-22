@@ -22,7 +22,7 @@ use remove::Remove;
 use stack::Stack;
 use shared::Shared;
 
-use scene_graph::{Scene, Entity, Plugin, Component, ComponentManager, Id};
+use scene_graph::{Scene, Time, Entity, Plugin, Component, ComponentManager, Id};
 
 
 struct SomeComponentManagerData {
@@ -170,6 +170,7 @@ impl Plugin for SomePlugin {
 
 #[test]
 fn test_scene() {
+    let start_time = Time::stamp();
     let mut scene = Scene::new();
     let mut grandparent = Entity::new();
     let mut parent = Entity::new();
@@ -222,6 +223,8 @@ fn test_scene() {
     assert_eq!(scene.has_entity(&grandparent), false);
     assert_eq!(scene.has_entity(&parent), false);
     assert_eq!(grandparent.has_child(&parent), true);
+
+    assert_eq!(scene.get_time().get_start_time() as usize, start_time as usize);
 
     scene.clear();
 }

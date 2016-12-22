@@ -15,6 +15,7 @@ use entity::Entity;
 use component::Component;
 use component_manager::ComponentManager;
 use plugin::Plugin;
+use _time::Time;
 
 
 struct SceneData {
@@ -27,6 +28,8 @@ struct SceneData {
 
     plugins_map: HashMap<Id, Shared<Box<Plugin>>>,
     plugins: Vector<Shared<Box<Plugin>>>,
+
+    time: Time,
 }
 
 #[derive(Clone)]
@@ -48,9 +51,14 @@ impl Scene {
 
                 plugins_map: HashMap::new(),
                 plugins: Vector::new(),
+
+                time: Time::new(),
             })
         }
     }
+
+    pub fn get_time(&self) -> &Time { &self.data.time }
+    pub fn get_time_mut(&mut self) -> &mut Time { &mut self.data.time }
 
     pub fn clear(&mut self) -> &mut Self {
         for entity in self.data.entities.iter_mut() {
@@ -96,6 +104,9 @@ impl Scene {
     }
 
     pub fn update(&mut self) -> &Self {
+
+        self.data.time.update();
+
         for plugin in self.data.plugins.iter_mut() {
             plugin.before();
         }

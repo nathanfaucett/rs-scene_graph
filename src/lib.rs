@@ -7,6 +7,8 @@
 
 extern crate alloc;
 
+extern crate time;
+
 #[macro_use]
 extern crate impl_any;
 extern crate shared;
@@ -26,6 +28,7 @@ mod entity;
 mod id;
 mod plugin;
 mod scene;
+mod _time;
 
 pub use component_manager::ComponentManager;
 pub use component::Component;
@@ -33,3 +36,4 @@ pub use entity::Entity;
 pub use id::Id;
 pub use plugin::Plugin;
 pub use scene::Scene;
+pub use _time::Time;

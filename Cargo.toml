@@ -11,6 +11,8 @@ repository = "https://github.com/nathanfaucett/rs-scene_graph.git"
 homepage = "https://github.com/nathanfaucett/rs-scene_graph"
 
 [dependencies]
+time = "0.1"
+
 hash_map = {git = "https://github.com/nathanfaucett/rs-hash_map.git"}
 map = {git = "https://github.com/nathanfaucett/rs-map.git"}
 insert = {git = "https://github.com/nathanfaucett/rs-insert.git"}
