@@ -141,15 +141,20 @@ impl Entity {
         self
     }
 
-    pub fn add_component<T: Component + Clone>(&mut self, mut component: T) -> &mut Self {
+    pub fn add_component<T: Component>(&mut self, mut component: T) -> &mut Self {
         let id = Id::of::<T>();
 
         if !self.data.read().components.contains_key(&id) {
-            if let Some(ref mut scene) = self.get_scene() {
-                scene::add_component(scene, &mut (Box::new(component.clone()) as Box<Component>));
-            }
+
             component.set_entity(Some(self.clone()));
-            self.data.write().components.insert(id, Box::new(component));
+
+            let component = Box::new(component) as Box<Component>;
+
+            if let Some(ref mut scene) = self.get_scene() {
+                scene::add_component(scene, &mut component));
+            }
+
+            self.data.write().components.insert(id, component);
         }
         self
     }
