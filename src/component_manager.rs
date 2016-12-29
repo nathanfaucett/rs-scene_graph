@@ -14,7 +14,6 @@ pub trait ComponentManager: Any {
     fn get_scene(&self) -> Option<Scene>;
     fn set_scene(&mut self, scene: Option<Scene>);
 
-    fn get_order(&self) -> usize;
     fn is_empty(&self) -> bool;
 
     fn clear(&mut self);

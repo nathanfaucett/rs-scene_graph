@@ -57,7 +57,7 @@ impl Time {
 
     pub fn update(&mut self) -> &mut Self {
         {
-            let ref mut data = self.data;
+            let ref mut data = self.data.write();
 
             data.frame = data.frame + 1;
 
@@ -83,29 +83,29 @@ impl Time {
 
     pub fn set_scale(&mut self, scale: f64) -> &mut Self {
         {
-            let ref mut data = self.data;
+            let ref mut data = self.data.write();
             data.scale = scale;
             data.fixed_delta = data.fixed * scale;
         }
         self
     }
-    pub fn get_scale(&mut self) -> f64 { self.data.scale }
+    pub fn get_scale(&mut self) -> f64 { self.data.read().scale }
 
     pub fn set_fixed_delta(&mut self, fixed_delta: f64) -> &mut Self {
         {
-            let ref mut data = self.data;
+            let ref mut data = self.data.write();
             data.fixed = fixed_delta;
             data.fixed_delta = data.fixed * data.scale;
         }
         self
     }
-    pub fn get_fixed_delta(&mut self) -> f64 { self.data.fixed_delta }
+    pub fn get_fixed_delta(&mut self) -> f64 { self.data.read().fixed_delta }
 
-    pub fn get_start_time(&self) -> f64 { self.data.start_time }
-    pub fn get_current_time(&self) -> f64 { self.data.current_time }
-    pub fn get_delta_time(&self) -> f64 { self.data.delta_time }
+    pub fn get_start_time(&self) -> f64 { self.data.read().start_time }
+    pub fn get_current_time(&self) -> f64 { self.data.read().current_time }
+    pub fn get_delta_time(&self) -> f64 { self.data.read().delta_time }
 
-    pub fn now(&self) -> f64 { Self::stamp() - self.data.start_time }
+    pub fn now(&self) -> f64 { Self::stamp() - self.data.read().start_time }
 
     pub fn stamp() -> f64 {
         let current_time = time::get_time();

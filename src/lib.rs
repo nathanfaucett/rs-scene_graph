@@ -2,7 +2,8 @@
 #![feature(core_intrinsics)]
 #![feature(get_type_id)]
 #![feature(raw)]
-#![no_std]
+//#![no_std]
+extern crate core;
 
 
 extern crate alloc;

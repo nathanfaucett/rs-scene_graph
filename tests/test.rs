@@ -48,18 +48,17 @@ impl ComponentManager for SomeComponentManager {
     fn get_id(&self) -> Id { Id::of::<SomeComponentManager>() }
 
     fn get_scene(&self) -> Option<Scene> {
-        match self.data.scene {
+        match self.data.read().scene {
             Some(ref scene) => Some(scene.clone()),
             None => None,
         }
     }
     fn set_scene(&mut self, scene: Option<Scene>) {
-        self.data.scene = scene;
+        self.data.write().scene = scene;
     }
 
-    fn get_order(&self) -> usize { 0 }
     fn is_empty(&self) -> bool {
-        self.data.components.len() == 0
+        self.data.read().components.len() == 0
     }
 
     fn clear(&mut self) {}
@@ -68,11 +67,11 @@ impl ComponentManager for SomeComponentManager {
 
     fn add_component(&mut self, component: &mut Box<Component>) {
         let component = component.downcast_ref::<SomeComponent>().unwrap();
-        self.data.components.push(component.clone());
+        self.data.write().components.push(component.clone());
     }
     fn remove_component(&mut self, component: &mut Box<Component>) {
         let component = component.downcast_ref::<SomeComponent>().unwrap();
-        let ref mut components = self.data.components;
+        let ref mut components = self.data.write().components;
 
         match components.iter().position(|c| *c == *component) {
             Some(i) => {
@@ -113,10 +112,10 @@ impl Component for SomeComponent {
         Id::of::<SomeComponentManager>()
     }
     fn get_entity(&self) -> Option<Entity> {
-        self.data.entity.clone()
+        self.data.read().entity.clone()
     }
     fn set_entity(&mut self, entity: Option<Entity>) {
-        self.data.entity = entity;
+        self.data.write().entity = entity;
     }
 }
 impl PartialEq<SomeComponent> for SomeComponent {
@@ -153,13 +152,11 @@ impl Plugin for SomePlugin {
     fn get_id(&self) -> Id { Id::of::<SomePlugin>() }
 
     fn get_scene(&self) -> Option<Scene> {
-        self.data.scene.clone()
+        self.data.read().scene.clone()
     }
     fn set_scene(&mut self, scene: Option<Scene>) {
-        self.data.scene = scene;
+        self.data.write().scene = scene;
     }
-
-    fn get_order(&self) -> usize {0}
 
     fn clear(&mut self) {}
     fn init(&mut self) {}
@@ -183,10 +180,10 @@ fn test_scene() {
     parent.add_component(SomeComponent::new());
     child.add_component(SomeComponent::new());
 
-    parent.add_child(&mut child);
-    grandparent.add_child(&mut parent);
+    parent.add_child(child.clone());
+    grandparent.add_child(parent.clone());
 
-    scene.add_entity(&mut grandparent);
+    scene.add_entity(grandparent.clone());
 
     scene.init();
 
@@ -213,12 +210,12 @@ fn test_scene() {
     assert_eq!(parent.has_component::<SomeComponent>(), false);
     assert_eq!(child.has_component::<SomeComponent>(), false);
 
-    scene.remove_entity(&mut child);
+    scene.remove_entity(child.clone());
 
     assert_eq!(parent.has_child(&child), false);
     assert_eq!(scene.has_entity(&child), false);
 
-    scene.remove_entity(&mut grandparent);
+    scene.remove_entity(grandparent.clone());
 
     assert_eq!(scene.has_entity(&grandparent), false);
     assert_eq!(scene.has_entity(&parent), false);
