@@ -1,21 +1,20 @@
 use alloc::boxed::Box;
 
-use core::any::Any;
+use core::any::{Any, TypeId};
 
-use id::Id;
 use entity::Entity;
 use component_manager::ComponentManager;
 
 
 pub trait Component: Any {
+    fn type_id(&self) -> TypeId;
 
-    fn get_id(&self) -> Id;
+    fn entity(&self) -> Option<&Entity>;
+    fn entity_mut(&mut self) -> Option<&mut Entity>;
+    fn set_entity(&mut self, entity: Option<Entity>);
 
     fn new_component_manager(&self) -> Box<ComponentManager>;
-    fn get_component_manager_id(&self) -> Id;
-
-    fn get_entity(&self) -> Option<Entity>;
-    fn set_entity(&mut self, entity: Option<Entity>);
+    fn component_manager_type_id(&self) -> TypeId;
 }
 
 impl Component {

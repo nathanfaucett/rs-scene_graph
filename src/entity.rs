@@ -1,261 +1,276 @@
 use alloc::boxed::Box;
 
+use core::any::TypeId;
+
 use hash_map::HashMap;
-use vector::Vector;
-use iterable::Iterable;
-use iterable_mut::IterableMut;
-use map::Map;
-use stack::Stack;
 use insert::Insert;
+use map::Map;
+use iterable_mut::IterableMut;
+
+use vector::Vector;
+use stack::Stack;
 use remove::Remove;
+
 use shared::Shared;
 
-use id::Id;
 use scene::{self, Scene};
 use component::Component;
 
 
-struct EntityData {
+struct EntityInner {
     depth: usize,
     scene: Option<Scene>,
     parent: Option<Entity>,
     children: Vector<Entity>,
-    components: HashMap<Id, Box<Component>>,
+    components: HashMap<TypeId, Box<Component>>,
 }
 
 #[derive(Clone)]
 pub struct Entity {
-    data: Shared<EntityData>,
+    inner: Shared<EntityInner>,
 }
 
 impl Entity {
-
     pub fn new() -> Self {
         Entity {
-            data: Shared::new(EntityData {
-                depth: 0,
-                scene: None,
-                parent: None,
-                children: Vector::new(),
-                components: HashMap::new(),
-            })
+            inner: unsafe {
+                Shared::new(Box::into_raw(Box::new(EntityInner {
+                    depth: 0usize,
+                    scene: None,
+                    parent: None,
+                    children: Vector::new(),
+                    components: HashMap::new(),
+                })))
+            }
         }
     }
 
     pub fn clear(&mut self) -> &mut Self {
-        {
-            let ref mut data = self.data.write();
-
-            data.depth = 0;
-            data.scene = None;
-            data.parent = None;
-
-            for child in data.children.iter_mut() {
-                child.clear();
-            }
-        }
-        {
-            let keys: Vector<Id> = self.data.read().components.keys().cloned().collect();
-
-            for id in keys {
-                self.remove_component_by_id(&id);
-            }
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            inner.depth = 0usize;
+            inner.scene = None;
+            inner.parent = None;
+            inner.children.clear();
+            inner.components.clear();
         }
         self
     }
 
-    pub fn get_depth(&self) -> usize {
-        self.data.read().depth
+    pub fn depth(&self) -> usize {
+        if let Some(inner) = unsafe {self.inner.as_ref()} {
+            inner.depth
+        } else {
+            0usize
+        }
     }
 
-    pub fn get_scene(&self) -> Option<Scene> {
-        match self.data.read().scene {
-            Some(ref scene) => Some(scene.clone()),
+    pub fn parent(&self) -> Option<&Entity> {
+        match unsafe {self.inner.as_ref()} {
+            Some(inner) => match inner.parent {
+                Some(ref parent) => Some(parent),
+                None => None,
+            },
             None => None,
         }
     }
-    pub fn has_scene(&self) -> bool {
-        match self.data.read().scene {
-            Some(_) => true,
-            None => false,
-        }
-    }
-
-    pub fn get_parent(&self) -> Option<Entity> {
-        match self.data.read().parent {
-            Some(ref parent) => Some(parent.clone()),
+    pub fn parent_mut(&mut self) -> Option<&mut Entity> {
+        match unsafe {self.inner.as_mut()} {
+            Some(inner) => match inner.parent {
+                Some(ref mut parent) => Some(parent),
+                None => None,
+            },
             None => None,
         }
     }
-    pub fn has_parent(&self) -> bool {
-        match self.data.read().parent {
-            Some(_) => true,
-            None => false,
+
+    pub fn scene(&self) -> Option<&Scene> {
+        match unsafe {self.inner.as_ref()} {
+            Some(inner) => match inner.scene {
+                Some(ref scene) => Some(scene),
+                None => None,
+            },
+            None => None,
+        }
+    }
+    pub fn scene_mut(&mut self) -> Option<&mut Scene> {
+        match unsafe {self.inner.as_mut()} {
+            Some(inner) => match inner.scene {
+                Some(ref mut scene) => Some(scene),
+                None => None,
+            },
+            None => None,
         }
     }
 
-    pub fn add_child(&mut self, mut child: Entity) -> &Self {
-        if *self != child {
-            if let Some(ref mut parent) = child.get_parent() {
-                parent.remove_child(child.clone());
+    fn update_children_depth(&mut self) {
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            let depth = inner.depth + 1;
+
+            for child in inner.children.iter_mut() {
+                if let Some(child_inner) = unsafe {child.inner.as_mut()} {
+                    child_inner.depth = depth;
+                }
+                child.update_children_depth();
+            }
+        }
+    }
+
+    pub fn add_child(&mut self, mut entity: Entity) -> &mut Self {
+        assert!(self != &entity);
+
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            if let Some(child_inner) = unsafe {entity.inner.as_mut()} {
+                child_inner.parent = Some(self.clone());
+                child_inner.depth = inner.depth + 1;
             }
 
-            self.data.write().children.push(child.clone());
+            entity.update_children_depth();
+            inner.children.push(entity.clone());
 
-            {
-                let ref mut child_data = child.data.write();
-                child_data.depth = self.get_depth() + 1;
-                child_data.parent = Some(self.clone());
-            }
-            child.update_children_depth();
-
-            if let Some(ref mut scene) = self.get_scene() {
-                scene.add_entity(child);
+            if let Some(scene) = self.scene_mut() {
+                scene.add_entity(entity);
             }
         }
         self
     }
-    pub fn has_child(&self, child: &Entity) -> bool {
-        match self.data.read().children.iter().position(|c| *c == *child) {
-            Some(_) => true,
-            None => false,
-        }
-    }
-    pub fn remove_child(&mut self, mut child: Entity) -> &mut Self {
-        {
-            let ref mut children = self.data.write().children;
+    pub fn remove_child(&mut self, entity: &mut Entity) -> &mut Self {
+        assert!(self != entity);
 
-            match children.iter().position(|c| *c == child) {
-                Some(i) => {
-                    {
-                        let ref mut child_data = child.data.write();
-                        child_data.depth = 0;
-                        child_data.parent = None;
+        entity.detach();
+
+        if let Some(scene) = self.scene_mut() {
+            scene.remove_entity(entity);
+        }
+        self
+    }
+    pub fn detach(&mut self) -> &mut Self {
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            if let Some(ref mut parent) = inner.parent {
+                if let Some(parent_inner) = unsafe {parent.inner.as_mut()} {
+                    if let Some(index) = parent_inner.children.iter().position(|e| e == self) {
+                        parent_inner.children.remove(&index);
                     }
-                    child.update_children_depth();
-                    children.remove(&i);
-                },
-                None => (),
+                }
             }
+            inner.depth = 0usize;
+            inner.parent = None;
         }
+        self.update_children_depth();
         self
     }
 
     pub fn add_component<T: Component>(&mut self, mut component: T) -> &mut Self {
-        let id = Id::of::<T>();
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            let id = TypeId::of::<T>();
 
-        if !self.data.read().components.contains_key(&id) {
+            if !inner.components.contains_key(&id) {
 
-            component.set_entity(Some(self.clone()));
+                component.set_entity(Some(self.clone()));
 
-            let component = Box::new(component) as Box<Component>;
+                let mut component = Box::new(component) as Box<Component>;
 
-            if let Some(ref mut scene) = self.get_scene() {
-                scene::add_component(scene, &mut component));
-            }
-
-            self.data.write().components.insert(id, component);
-        }
-        self
-    }
-    pub fn has_component<T: Component + Clone>(&self) -> bool {
-        self.data.read().components.contains_key(&Id::of::<T>())
-    }
-    pub fn remove_component<T: Component + Clone>(&mut self) -> &mut Self {
-        self.remove_component_by_id(&Id::of::<T>())
-    }
-    pub fn remove_component_by_id(&mut self, id: &Id) -> &mut Self {
-        if self.data.read().components.contains_key(&id) {
-            {
-                let scene = self.get_scene();
-                let ref mut data = self.data.write();
-                let ref mut components = data.components;
-                let mut component = components.get_mut(id).unwrap();
-
-                component.set_entity(None);
-
-                if scene.is_some() {
-                    scene::remove_component(&mut scene.unwrap(), component);
+                if let Some(scene) = self.scene_mut() {
+                    scene::add_component(scene, &mut component);
                 }
+
+                inner.components.insert(id, component);
             }
-            self.data.write().components.remove(&id);
         }
         self
     }
-    pub fn get_component<T: Component + Clone>(&self) -> Option<T> {
-        let ref components = self.data.read().components;
-        let id = Id::of::<T>();
+    pub fn has_component<T: Component>(&self) -> bool {
+        if let Some(inner) = unsafe {self.inner.as_ref()} {
+            inner.components.contains_key(&TypeId::of::<T>())
+        } else {
+            false
+        }
+    }
+    pub fn remove_component<T: Component>(&mut self) -> &mut Self {
+        self.remove_component_by_type_id(&TypeId::of::<T>())
+    }
+    pub fn remove_component_by_type_id(&mut self, id: &TypeId) -> &mut Self {
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            let contains_key = inner.components.contains_key(&id);
 
-        if components.contains_key(&id) {
-            let component = components.get(&id).unwrap().downcast_ref::<T>().unwrap();
-            Some(component.clone())
+            if contains_key {
+                {
+                    let component = inner.components.get_mut(&id).unwrap();
+
+                    if let Some(scene) = self.scene_mut() {
+                        scene::remove_component(scene, component);
+                    }
+
+                    component.set_entity(None);
+                }
+                inner.components.remove(&id);
+            }
+        }
+        self
+    }
+    pub fn component<T: Component>(&self) -> Option<&T> {
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            let id = TypeId::of::<T>();
+
+            if let Some(c) = inner.components.get(&id) {
+                c.downcast_ref::<T>()
+            } else {
+                None
+            }
         } else {
             None
         }
     }
-    pub fn for_each_component<F>(&mut self, func: F) where F: Fn(&mut Box<Component>) {
-        for (_, component) in self.data.write().components.iter_mut() {
-            func(component);
-        }
-    }
+    pub fn component_mut<T: Component>(&self) -> Option<&mut T> {
+        if let Some(inner) = unsafe {self.inner.as_mut()} {
+            let id = TypeId::of::<T>();
 
-    pub fn for_each_child<F>(&mut self, func: F) where F: Fn(&mut Entity) {
-        for child in self.data.write().children.iter_mut() {
-            func(child);
-        }
-    }
-    fn update_children_depth(&mut self) {
-        let ref mut entity = self.data.write();
-        let depth = entity.depth + 1;
-
-        for child in entity.children.iter_mut() {
-            child.data.write().depth = depth;
-            child.update_children_depth()
+            if let Some(c) = inner.components.get_mut(&id) {
+                c.downcast_mut::<T>()
+            } else {
+                None
+            }
+        } else {
+            None
         }
     }
 }
 
 pub fn set_scene<'a>(entity: &'a mut Entity, scene: &'a mut Scene) {
+    if let Some(inner) = unsafe {entity.inner.as_mut()} {
+        inner.scene = Some(scene.clone());
 
-    for child in entity.data.read().children.iter() {
-        scene.add_entity(child.clone());
+        for child in inner.children.iter_mut() {
+            scene.add_entity(child.clone());
+        }
+        for (_, component) in inner.components.iter_mut() {
+            scene::add_component(scene, component);
+        }
     }
-    for (_, component) in entity.data.write().components.iter_mut() {
-        scene::add_component(scene, component);
-    }
-
-    entity.data.write().scene = Some(scene.clone());
 }
 pub fn remove_scene<'a>(entity: &'a mut Entity, scene: &'a mut Scene) {
-    if let Some(ref mut parent) = entity.get_parent() {
-        parent.remove_child(entity.clone());
-    }
-
-    {
-        let ref mut entity_data = entity.data.write();
-
-        for (_, component) in entity_data.components.iter_mut() {
+    if let Some(inner) = unsafe {entity.inner.as_mut()} {
+        for (_, component) in inner.components.iter_mut() {
             scene::remove_component(scene, component);
         }
+        for child in inner.children.iter_mut() {
+            scene.remove_entity(child);
+        }
 
-        entity_data.depth = 0;
-        entity_data.scene = None;
-    }
-
-    remove_scene_children(entity, scene);
-    entity.update_children_depth();
-}
-pub fn remove_scene_children<'a>(entity: &'a mut Entity, scene: &'a mut Scene) {
-    for child in entity.data.write().children.iter_mut() {
-        scene::remove_entity(scene, child.clone());
+        inner.scene = None;
     }
 }
 
 impl PartialEq<Entity> for Entity {
-    fn eq(&self, other: &Entity) -> bool {
-        (&*self.data as *const _) == (&*other.data as *const _)
+    fn eq(&self, other: &Self) -> bool {
+        match unsafe {self.inner.as_ref()} {
+            Some(a) => match unsafe {other.inner.as_ref()} {
+                Some(b) => a as *const _ == b as *const _,
+                None => false,
+            },
+            None => false,
+        }
     }
-    fn ne(&self, other: &Entity) -> bool {
+    fn ne(&self, other: &Self) -> bool {
         !self.eq(other)
     }
 }

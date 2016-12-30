@@ -4,25 +4,25 @@ version = "0.1.0"
 authors = ["nathanfaucett <nathanfaucett@gmail.com>"]
 
 keywords = ["scene_graph"]
-description = "entity component scene graph for rust"
+description = "scene graph"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/nathanfaucett/rs-scene_graph.git"
 homepage = "https://github.com/nathanfaucett/rs-scene_graph"
 
 [dependencies]
-time = "0.1"
+impl_any = {git = "https://github.com/nathanfaucett/rs-impl_any"}
 
-hash_map = {git = "https://github.com/nathanfaucett/rs-hash_map.git"}
-map = {git = "https://github.com/nathanfaucett/rs-map.git"}
-insert = {git = "https://github.com/nathanfaucett/rs-insert.git"}
-remove = {git = "https://github.com/nathanfaucett/rs-remove.git"}
+hash_map = {git = "https://github.com/nathanfaucett/rs-hash_map"}
+insert = {git = "https://github.com/nathanfaucett/rs-insert"}
+map = {git = "https://github.com/nathanfaucett/rs-map"}
+iterable = {git = "https://github.com/nathanfaucett/rs-iterable"}
+iterable_mut = {git = "https://github.com/nathanfaucett/rs-iterable_mut"}
 
-vector = {git = "https://github.com/nathanfaucett/rs-vector.git"}
-stack = {git = "https://github.com/nathanfaucett/rs-stack.git"}
+vector = {git = "https://github.com/nathanfaucett/rs-vector"}
+stack = {git = "https://github.com/nathanfaucett/rs-stack"}
+remove = {git = "https://github.com/nathanfaucett/rs-remove"}
 
-iterable = {git = "https://github.com/nathanfaucett/rs-iterable.git"}
-iterable_mut = {git = "https://github.com/nathanfaucett/rs-iterable_mut.git"}
-
-impl_any = {git = "https://github.com/nathanfaucett/rs-impl_any.git"}
 shared = {git = "https://github.com/nathanfaucett/rs-shared.git"}
+
+[dev-dependencies]
