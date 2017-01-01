@@ -11,6 +11,7 @@ repository = "https://github.com/nathanfaucett/rs-scene_graph.git"
 homepage = "https://github.com/nathanfaucett/rs-scene_graph"
 
 [dependencies]
+spin = "0.4"
 impl_any = {git = "https://github.com/nathanfaucett/rs-impl_any"}
 
 hash_map = {git = "https://github.com/nathanfaucett/rs-hash_map"}

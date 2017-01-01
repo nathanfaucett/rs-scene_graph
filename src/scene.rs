@@ -1,8 +1,11 @@
-use std::sync::mpsc::{channel, Sender, Receiver};
-
 use alloc::boxed::Box;
+use alloc::arc::Arc;
 
+use core::sync::atomic::{AtomicBool, Ordering};
 use core::any::TypeId;
+use core::mem;
+
+use spin::RwLock;
 
 use hash_map::HashMap;
 use insert::Insert;
@@ -21,24 +24,10 @@ use component::Component;
 use component_manager::ComponentManager;
 
 
-#[derive(Debug)]
-pub enum SceneMsg {
-    Init,
-    Update,
-    Clear,
-    Sort,
-}
-
-
 struct SceneInner {
-    initted: bool,
-    entities: Vector<Entity>,
-
-    component_manager_sender: Sender<SceneMsg>,
-    component_manager_receiver: Receiver<SceneMsg>,
-    component_manager_senders: HashMap<TypeId, Sender<SceneMsg>>,
-
-    component_managers: HashMap<TypeId, Box<ComponentManager>>,
+    initted: AtomicBool,
+    entities: Arc<RwLock<Vector<Entity>>>,
+    component_managers: Arc<RwLock<HashMap<TypeId, Arc<RwLock<Box<ComponentManager>>>>>>,
 }
 
 #[derive(Clone)]
@@ -48,18 +37,12 @@ pub struct Scene {
 
 impl Scene {
     pub fn new() -> Self {
-        let (sender, receiver) = channel();
         Scene {
             inner: unsafe {
                 Shared::new(Box::into_raw(Box::new(SceneInner {
-                    initted: false,
-                    entities: Vector::new(),
-
-                    component_manager_sender: sender,
-                    component_manager_receiver: receiver,
-                    component_manager_senders: HashMap::new(),
-
-                    component_managers: HashMap::new(),
+                    initted: AtomicBool::new(false),
+                    entities: Arc::new(RwLock::new(Vector::new())),
+                    component_managers: Arc::new(RwLock::new(HashMap::new())),
                 })))
             }
         }
@@ -67,7 +50,7 @@ impl Scene {
 
     pub fn initted(&mut self) -> bool {
         if let Some(inner) = unsafe {self.inner.as_mut()} {
-            inner.initted
+            inner.initted.load(Ordering::Relaxed)
         } else {
             false
         }
@@ -75,27 +58,8 @@ impl Scene {
 
     pub fn init(&mut self) -> &mut Self {
         if let Some(inner) = unsafe {self.inner.as_mut()} {
-            if !inner.initted {
-                let mut waiting = 0usize;
-
-                for _ in inner.component_managers.iter() {
-                    match inner.component_manager_sender.send(SceneMsg::Init) {
-                        Ok(_) => waiting += 1,
-                        Err(_) => (),
-                    }
-                }
-
-                while waiting != 0 {
-                    match inner.component_manager_receiver.recv() {
-                        Ok(x) => {
-                            waiting -= 1;
-                            println!("{:?}", x);
-                        },
-                        Err(_) => (),
-                    }
-                }
-
-                inner.initted = true;
+            if inner.initted.load(Ordering::Relaxed) {
+                inner.initted.store(true, Ordering::Relaxed)
             }
         }
         self
@@ -103,12 +67,12 @@ impl Scene {
 
     pub fn clear(&mut self) -> &mut Self {
         if let Some(inner) = unsafe {self.inner.as_mut()} {
-            for entity in inner.entities.iter_mut() {
+            for entity in inner.entities.write().iter_mut() {
                 entity.clear();
             }
 
-            inner.component_managers.clear();
-            inner.entities.clear();
+            inner.component_managers.write().clear();
+            inner.entities.write().clear();
         }
         self
     }
@@ -118,7 +82,7 @@ impl Scene {
         entity::set_scene(&mut entity, self);
 
         if let Some(inner) = unsafe {self.inner.as_mut()} {
-            inner.entities.push(entity);
+            inner.entities.write().push(entity);
         }
 
         self
@@ -128,8 +92,10 @@ impl Scene {
         entity::remove_scene(entity, self);
 
         if let Some(inner) = unsafe {self.inner.as_mut()} {
-            if let Some(index) = inner.entities.iter().position(|e| e == entity) {
-                inner.entities.remove(&index);
+            let mut entities = inner.entities.write();
+
+            if let Some(index) = entities.iter().position(|e| e == entity) {
+                entities.remove(&index);
             }
         }
 
@@ -138,26 +104,15 @@ impl Scene {
 
     pub fn has_component_manager<T: ComponentManager>(&self) -> bool {
         if let Some(inner) = unsafe {self.inner.as_ref()} {
-            inner.component_managers.contains_key(&TypeId::of::<T>())
+            inner.component_managers.read().contains_key(&TypeId::of::<T>())
         } else {
             false
         }
     }
-    pub fn component_manager<T: ComponentManager>(&self) -> Option<&T> {
+    pub fn component_manager<T: ComponentManager>(&self) -> Option<Arc<RwLock<T>>> {
         if let Some(inner) = unsafe {self.inner.as_ref()} {
-            if let Some(component_manager) = inner.component_managers.get(&TypeId::of::<T>()) {
-                component_manager.downcast_ref::<T>()
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-    pub fn component_manager_mut<T: ComponentManager>(&mut self) -> Option<&mut T> {
-        if let Some(inner) = unsafe {self.inner.as_mut()} {
-            if let Some(component_manager) = inner.component_managers.get_mut(&TypeId::of::<T>()) {
-                component_manager.downcast_mut::<T>()
+            if let Some(component_manager) = inner.component_managers.read().get(&TypeId::of::<T>()) {
+                Some(unsafe {mem::transmute(component_manager.clone())})
             } else {
                 None
             }
@@ -167,20 +122,15 @@ impl Scene {
     }
 }
 
-pub fn add_component_manager<'a>(scene: &'a mut Scene, component_manager: &'a mut Box<ComponentManager>) {
-    if let Some(inner) = unsafe {scene.inner.as_mut()} {
-        let (sender, receiver) = channel();
-        component_manager.set_sender(Some(inner.component_manager_sender.clone()));
-        component_manager.set_receiver(Some(receiver));
-        inner.component_manager_senders.insert(component_manager.type_id(), sender);
+pub fn add_component_manager<'a>(scene: &'a mut Scene, _component_manager: &'a mut Arc<RwLock<Box<ComponentManager>>>) {
+    if let Some(_inner) = unsafe {scene.inner.as_mut()} {
+
     }
 }
 
-pub fn remove_component_manager<'a>(scene: &'a mut Scene, component_manager: &'a mut Box<ComponentManager>) {
-    if let Some(inner) = unsafe {scene.inner.as_mut()} {
-        component_manager.set_sender(None);
-        component_manager.set_receiver(None);
-        inner.component_manager_senders.remove(&component_manager.type_id());
+pub fn remove_component_manager<'a>(scene: &'a mut Scene, _component_manager: &'a mut Arc<RwLock<Box<ComponentManager>>>) {
+    if let Some(_inner) = unsafe {scene.inner.as_mut()} {
+
     }
 }
 
@@ -188,17 +138,20 @@ pub fn add_component<'a>(scene: &'a mut Scene, component: &'a mut Box<Component>
     if let Some(inner) = unsafe {scene.inner.as_mut()} {
         let component_manager_type_id = component.component_manager_type_id();
 
-        if !inner.component_managers.contains_key(&component_manager_type_id) {
+        if !inner.component_managers.read().contains_key(&component_manager_type_id) {
             let mut component_manager = component.new_component_manager();
             component_manager.set_scene(Some(scene.clone()));
-            inner.component_managers.insert(component_manager_type_id, component_manager);
+            inner.component_managers.write().insert(
+                component_manager_type_id,
+                Arc::new(RwLock::new(component_manager))
+            );
         }
+        let mut component_managers = inner.component_managers.write();
+        let mut component_manager = component_managers.get_mut(&component_manager_type_id).unwrap();
 
-        let mut component_manager = inner.component_managers.get_mut(&component_manager_type_id).unwrap();
+        component_manager.write().add_component(component);
 
-        component_manager.add_component(component);
-
-        if inner.initted {
+        if inner.initted.load(Ordering::Relaxed) {
             add_component_manager(scene, component_manager);
         }
     }
@@ -209,9 +162,9 @@ pub fn remove_component<'a>(scene: &'a mut Scene, component: &'a mut Box<Compone
         let component_manager_type_id = component.component_manager_type_id();
         let mut is_empty = false;
 
-        if let Some(component_manager) = inner.component_managers.get_mut(&component_manager_type_id) {
-            component_manager.remove_component(component);
-            is_empty = component_manager.is_empty();
+        if let Some(component_manager) = inner.component_managers.write().get_mut(&component_manager_type_id) {
+            component_manager.write().remove_component(component);
+            is_empty = component_manager.read().is_empty();
 
             if is_empty {
                 remove_component_manager(scene, component_manager);
@@ -219,7 +172,7 @@ pub fn remove_component<'a>(scene: &'a mut Scene, component: &'a mut Box<Compone
         }
 
         if is_empty {
-            inner.component_managers.remove(&component_manager_type_id);
+            inner.component_managers.write().remove(&component_manager_type_id);
         }
     }
 }

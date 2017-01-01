@@ -2,9 +2,8 @@ extern crate scene_graph;
 
 
 use std::any::TypeId;
-use std::sync::mpsc::{Sender, Receiver};
 
-use scene_graph::{SceneMsg, Scene, Entity, Component, ComponentManager};
+use scene_graph::{Scene, Entity, Component, ComponentManager};
 
 
 #[test]
@@ -112,16 +111,12 @@ fn test_entity_depth_detach() {
 pub struct TransformManager {
     scene: Option<Scene>,
     components: usize,
-    sender: Option<Sender<SceneMsg>>,
-    receiver: Option<Receiver<SceneMsg>>,
 }
 impl TransformManager {
     pub fn new() -> Self {
         TransformManager {
             scene: None,
             components: 0usize,
-            sender: None,
-            receiver: None,
         }
     }
 }
@@ -144,13 +139,6 @@ impl ComponentManager for TransformManager {
     }
     fn set_scene(&mut self, scene: Option<Scene>) {
         self.scene = scene;
-    }
-
-    fn set_sender(&mut self, sender: Option<Sender<SceneMsg>>) {
-        self.sender = sender;
-    }
-    fn set_receiver(&mut self, receiver: Option<Receiver<SceneMsg>>) {
-        self.receiver = receiver;
     }
 
     fn is_empty(&self) -> bool {
@@ -225,7 +213,7 @@ fn test_scene_components() {
     assert!(scene.has_component_manager::<TransformManager>());
     {
         let transform_manager = scene.component_manager::<TransformManager>().unwrap();
-        assert!(!transform_manager.is_empty());
+        assert!(!transform_manager.read().is_empty());
     }
     {
         let mut transform = entity.component_mut::<Transform>().unwrap();

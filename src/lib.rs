@@ -1,10 +1,13 @@
 #![feature(raw)]
 #![feature(alloc)]
 #![feature(get_type_id)]
+//#![no_std]
+extern crate core;
 
 
 extern crate alloc;
-extern crate core;
+
+extern crate spin;
 
 #[macro_use]
 extern crate impl_any;
@@ -31,4 +34,4 @@ mod entity;
 pub use component_manager::ComponentManager;
 pub use component::Component;
 pub use entity::Entity;
-pub use scene::{Scene, SceneMsg};
+pub use scene::Scene;
