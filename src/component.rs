@@ -9,8 +9,7 @@ use component_manager::ComponentManager;
 pub trait Component: Any {
     fn type_id(&self) -> TypeId;
 
-    fn entity(&self) -> Option<&Entity>;
-    fn entity_mut(&mut self) -> Option<&mut Entity>;
+    fn entity(&self) -> Option<Entity>;
     fn set_entity(&mut self, entity: Option<Entity>);
 
     fn new_component_manager(&self) -> Box<ComponentManager>;

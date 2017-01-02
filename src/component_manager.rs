@@ -9,8 +9,7 @@ use component::Component;
 pub trait ComponentManager: Any {
     fn type_id(&self) -> TypeId;
 
-    fn scene(&self) -> Option<&Scene>;
-    fn scene_mut(&mut self) -> Option<&mut Scene>;
+    fn scene(&self) -> Option<Scene>;
     fn set_scene(&mut self, scene: Option<Scene>);
 
     fn is_empty(&self) -> bool;

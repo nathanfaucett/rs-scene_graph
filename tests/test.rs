@@ -125,17 +125,8 @@ impl ComponentManager for TransformManager {
         TypeId::of::<TransformManager>()
     }
 
-    fn scene(&self) -> Option<&Scene> {
-        match self.scene {
-            Some(ref s) => Some(s),
-            None => None,
-        }
-    }
-    fn scene_mut(&mut self) -> Option<&mut Scene> {
-        match self.scene {
-            Some(ref mut s) => Some(s),
-            None => None,
-        }
+    fn scene(&self) -> Option<Scene> {
+        self.scene.clone()
     }
     fn set_scene(&mut self, scene: Option<Scene>) {
         self.scene = scene;
@@ -176,17 +167,8 @@ impl Component for Transform {
         TypeId::of::<Transform>()
     }
 
-    fn entity(&self) -> Option<&Entity> {
-        match self.entity {
-            Some(ref e) => Some(e),
-            None => None,
-        }
-    }
-    fn entity_mut(&mut self) -> Option<&mut Entity> {
-        match self.entity {
-            Some(ref mut e) => Some(e),
-            None => None,
-        }
+    fn entity(&self) -> Option<Entity> {
+        self.entity.clone()
     }
     fn set_entity(&mut self, entity: Option<Entity>) {
         self.entity = entity;
